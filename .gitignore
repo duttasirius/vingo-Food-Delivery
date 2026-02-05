@@ -1,0 +1,40 @@
+# dependencies
+node_modules/
+
+# env files
+.env
+.env.*
+!.env.example
+
+# logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# build folders
+dist/
+build/
+.vite/
+
+# cache
+.cache/
+.tmp/
+
+# editor files
+.vscode/
+.idea/
+
+# local database files
+*.db
+
+# coverage
+coverage/
+
+# uploads (if you store images locally)
+uploads/
