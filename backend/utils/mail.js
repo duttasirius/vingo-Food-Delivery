@@ -1,12 +1,16 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import nodemailer from "nodemailer";
 
+console.log("EMAIL:", process.env.EMAIL);
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS);
+
 const transporter = nodemailer.createTransport({
-  service: "Gmail",
-  port: 465, // 465 is the gmail port
-  secure: true, // Use true for port 465, false for port 587
+  service: "gmail",
   auth: {
     user: process.env.EMAIL,
-    pass: process.env.pass,
+    pass: process.env.EMAIL_PASS,
   },
 });
 
