@@ -9,6 +9,8 @@ import { GoogleAuthProvider } from "firebase/auth";
 
 import { signInWithPopup } from "firebase/auth";
 import { auth } from "../../firebase.js";
+import { useDispatch } from "react-redux";
+import { setUserData } from "../redux/userSlice.js";
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,6 +20,7 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
   const [err, setErr] = useState("");
+  const dispatch = useDispatch();
 
   const navigate = useNavigate();
 
@@ -30,6 +33,7 @@ const SignUp = () => {
       );
 
       console.log(result);
+      dispatch(setUserData(result.data));
     } catch (error) {
       setErr(error.response.data.message);
     }
@@ -55,6 +59,7 @@ const SignUp = () => {
       );
 
       console.log(data);
+      dispatch(setUserData(data));
       setErr("");
     } catch (error) {
       console.log("ERROR:", error.code, error.message);

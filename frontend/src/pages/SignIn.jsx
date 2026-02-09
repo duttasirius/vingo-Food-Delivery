@@ -8,6 +8,8 @@ import { serverurl } from "../App";
 import { GoogleAuthProvider } from "firebase/auth";
 import { signInWithPopup } from "firebase/auth";
 import { auth } from "../../firebase.js";
+import { useDispatch } from "react-redux";
+import { setUserData } from "../redux/userSlice.js";
 
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +18,7 @@ const SignIn = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const dispatch = useDispatch();
 
   const navigate = useNavigate();
 
@@ -29,6 +32,7 @@ const SignIn = () => {
 
       console.log(result);
       setErr("");
+      dispatch(setUserData(result.data));
     } catch (error) {
       console.log(error);
       setErr(error.response.data.message);
@@ -49,6 +53,7 @@ const SignIn = () => {
         { withCredentials: true },
       );
       console.log(data);
+      dispatch(setUserData(data));
     } catch (error) {
       console.log("ERROR:", error.code, error.message);
     }
