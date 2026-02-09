@@ -5,6 +5,10 @@ import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { serverurl } from "../App";
+import { GoogleAuthProvider } from "firebase/auth";
+
+import { signInWithPopup } from "firebase/auth";
+import { auth } from "../../firebase.js";
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -13,6 +17,7 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mobile, setMobile] = useState("");
+  const [err, setErr] = useState("");
 
   const navigate = useNavigate();
 
@@ -26,7 +31,33 @@ const SignUp = () => {
 
       console.log(result);
     } catch (error) {
-      console.log(error);
+      setErr(error.response.data.message);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    console.log("clicked");
+    if (!mobile) {
+      return setErr("MOBILE NUMBER REQUIRED");
+    }
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    try {
+      const { data } = await axios.post(
+        `${serverurl}/api/auth/google-auth`,
+        {
+          fullName: result.user.displayName,
+          email: result.user.email,
+          role,
+          mobile,
+        },
+        { withCredentials: true },
+      );
+
+      console.log(data);
+      setErr("");
+    } catch (error) {
+      console.log("ERROR:", error.code, error.message);
     }
   };
 
@@ -43,6 +74,7 @@ const SignUp = () => {
         <div className="mb-4">
           <label className="text-sm font-medium text-gray-700">Full Name</label>
           <input
+            required
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -55,6 +87,7 @@ const SignUp = () => {
         <div className="mb-4">
           <label className="text-sm font-medium text-gray-700">Email</label>
           <input
+            required
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -69,6 +102,7 @@ const SignUp = () => {
             Mobile Number
           </label>
           <input
+            required
             type="tel"
             value={mobile}
             onChange={(e) => setMobile(e.target.value)}
@@ -83,6 +117,7 @@ const SignUp = () => {
 
           <div className="relative mt-1">
             <input
+              required
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -133,6 +168,7 @@ const SignUp = () => {
         >
           Sign Up
         </button>
+        <p className="text-red-500 text-center my-9">{err}</p>
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-5">
@@ -142,7 +178,10 @@ const SignUp = () => {
         </div>
 
         {/* Google */}
-        <button className="w-full border rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-gray-50 transition">
+        <button
+          onClick={handleGoogleAuth}
+          className="w-full border rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+        >
           <FcGoogle size={20} />
           <span className="text-sm font-medium">Sign up with Google</span>
         </button>

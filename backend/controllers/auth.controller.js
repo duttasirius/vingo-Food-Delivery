@@ -38,7 +38,7 @@ export const signUp = async (req, res) => {
 
     res.cookie("token", token, {
       secure: false,
-      sameSite: "Strict",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
     });
@@ -73,7 +73,7 @@ export const signIn = async (req, res) => {
 
     res.cookie("token", token, {
       secure: false,
-      sameSite: "Strict",
+      sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
       httpOnly: true,
     });
@@ -89,7 +89,7 @@ export const signIn = async (req, res) => {
 
 // logout user
 
-export const signOut = async () => {
+export const signOut = async (req, res) => {
   try {
     res.clearCookie("token");
 
@@ -265,5 +265,43 @@ export const resetPassword = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
+  }
+};
+
+// GOOGLE AUTH
+export const googleAuth = async (req, res) => {
+  try {
+    const { fullName, email, mobile, role } = req.body;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        fullName,
+        email,
+        mobile,
+        role,
+      });
+    }
+
+    const token = await genToken(user._id);
+
+    res.cookie("token", token, {
+      secure: false,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true,
+    });
+
+    return res.status(201).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.log(error);
+    res.josn({
+      success: false,
+      message: error.message,
+    });
   }
 };

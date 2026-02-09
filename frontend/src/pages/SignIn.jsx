@@ -5,10 +5,14 @@ import { FcGoogle } from "react-icons/fc";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { serverurl } from "../App";
+import { GoogleAuthProvider } from "firebase/auth";
+import { signInWithPopup } from "firebase/auth";
+import { auth } from "../../firebase.js";
 
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("user");
+  const [err, setErr] = useState("");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,8 +28,29 @@ const SignIn = () => {
       );
 
       console.log(result);
+      setErr("");
     } catch (error) {
       console.log(error);
+      setErr(error.response.data.message);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    console.log("clicked");
+
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    try {
+      const { data } = await axios.post(
+        `${serverurl}/api/auth/google-auth`,
+        {
+          email: result.user.email,
+        },
+        { withCredentials: true },
+      );
+      console.log(data);
+    } catch (error) {
+      console.log("ERROR:", error.code, error.message);
     }
   };
 
@@ -42,6 +67,7 @@ const SignIn = () => {
         <div className="mb-4">
           <label className="text-sm font-medium text-gray-700">Email</label>
           <input
+            required
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -56,6 +82,7 @@ const SignIn = () => {
 
           <div className="relative mt-1">
             <input
+              required
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -93,6 +120,7 @@ const SignIn = () => {
         >
           Sign In
         </button>
+        <p className="text-red-500 text-center my-9">{err}</p>
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-5">
@@ -102,7 +130,10 @@ const SignIn = () => {
         </div>
 
         {/* Google */}
-        <button className="w-full border rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-gray-50 transition">
+        <button
+          onClick={handleGoogleAuth}
+          className="w-full border rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+        >
           <FcGoogle size={20} />
           <span className="text-sm font-medium">Sign in with Google</span>
         </button>
