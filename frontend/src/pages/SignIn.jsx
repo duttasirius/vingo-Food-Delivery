@@ -32,7 +32,9 @@ const SignIn = () => {
 
       console.log(result);
       setErr("");
-      dispatch(setUserData(result.data));
+      dispatch(setUserData(result.data.user));
+
+      navigate("/");
     } catch (error) {
       console.log(error);
       setErr(error.response.data.message);
@@ -53,7 +55,7 @@ const SignIn = () => {
         { withCredentials: true },
       );
       console.log(data);
-      dispatch(setUserData(data));
+      dispatch(setUserData(result.data.user));
     } catch (error) {
       console.log("ERROR:", error.code, error.message);
     }

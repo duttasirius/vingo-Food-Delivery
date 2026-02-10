@@ -5,16 +5,16 @@ import { FiShoppingCart } from "react-icons/fi";
 import { useDispatch, useSelector } from "react-redux";
 import { RxCross2 } from "react-icons/rx";
 import axios from "axios";
-// import { serverUrl } from "../App";
+
 // import { setSearchItems, setUserData } from "../redux/userSlice";
 import { FaPlus } from "react-icons/fa6";
 import { TbReceipt2 } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
+import { serverurl } from "../App";
+import { setUserData } from "../redux/userSlice";
 
 function Nav() {
-  const { userData, currentCity, cartItems } = useSelector(
-    (state) => state.user,
-  );
+  const { userData, city, cartItems } = useSelector((state) => state.user);
   // const { myShopData } = useSelector((state) => state.owner);
 
   const [showInfo, setShowInfo] = useState(false);
@@ -26,11 +26,11 @@ function Nav() {
 
   const handleLogOut = async () => {
     try {
-      await axios.get(`${serverUrl}/api/auth/signout`, {
+      await axios.get(`${serverurl}/api/auth/signout`, {
         withCredentials: true,
       });
       dispatch(setUserData(null));
-      navigate("/login");
+      navigate("/signin");
     } catch (error) {
       console.log(error);
     }
@@ -64,7 +64,7 @@ function Nav() {
         <div className="w-[90%] h-[70px]  bg-white shadow-xl rounded-lg items-center gap-[20px] flex fixed top-[80px] left-[5%] md:hidden">
           <div className="flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400">
             <FaLocationDot size={25} className=" text-[#ff4d2d]" />
-            <div className="w-[80%] truncate text-gray-600">{currentCity}</div>
+            <div className="w-[80%] truncate text-gray-600">{city}</div>
           </div>
           <div className="w-[80%] flex items-center gap-[10px]">
             <IoIosSearch size={25} className="text-[#ff4d2d]" />
@@ -84,7 +84,7 @@ function Nav() {
         <div className="md:w-[60%] lg:w-[40%] h-[70px] bg-white shadow-xl rounded-lg items-center gap-[20px] hidden md:flex">
           <div className="flex items-center w-[30%] overflow-hidden gap-[10px] px-[10px] border-r-[2px] border-gray-400">
             <FaLocationDot size={25} className=" text-[#ff4d2d]" />
-            <div className="w-[80%] truncate text-gray-600">{currentCity}</div>
+            <div className="w-[80%] truncate text-gray-600">{city}</div>
           </div>
           <div className="w-[80%] flex items-center gap-[10px]">
             <IoIosSearch size={25} className="text-[#ff4d2d]" />

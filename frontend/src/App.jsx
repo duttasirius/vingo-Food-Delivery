@@ -6,6 +6,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import userGetCurrentUser from "./hooks/userGetCurrentUser";
 import { useSelector } from "react-redux";
 import Home from "./pages/Home";
+import useGetCity from "./hooks/useGetCity";
 
 export const serverurl = "http://localhost:8000";
 
@@ -13,6 +14,7 @@ export const serverurl = "http://localhost:8000";
 
 const App = () => {
   userGetCurrentUser();
+  useGetCity();
 
   // Getting user data from Redux store
 
@@ -21,20 +23,23 @@ const App = () => {
   // { userData } = destructuring → takes only userData from that slice
   // Component will auto re-render if userData changes in Redux
   const { userData } = useSelector((state) => state.user);
+
   return (
     <Routes>
-      {/* DEFAULT ROOT ROUTE */}
+      {/* FIX: redirect old /login */}
+      <Route path="/login" element={<Navigate to="/signin" />} />
 
       <Route
         path="/signup"
         element={!userData ? <SignUp /> : <Navigate to={"/"} />}
       />
+
       <Route
         path="/signin"
         element={!userData ? <SignIn /> : <Navigate to={"/"} />}
       />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
 
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/" element={<Home />} />
     </Routes>
   );
