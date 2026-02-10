@@ -18,7 +18,7 @@ const Home = () => {
   }
 
   return (
-    <div className="w-screen min-h-screen pt-[100px] flex flex-col items-center bg-gray-200">
+    <div className="w">
       {userData.role === "user" && <UserDashboard />}
       {userData.role === "owner" && <OwnerDashboard />}
       {userData.role === "deliveryBoy" && <DeliveryDashboard />}
