@@ -15,7 +15,8 @@ import { setUserData } from "../redux/userSlice";
 
 function Nav() {
   const { userData, city, cartItems } = useSelector((state) => state.user);
-  // const { myShopData } = useSelector((state) => state.owner);
+  //when i need to read the value useselector
+  const { myShopData } = useSelector((state) => state.owner);
 
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -118,7 +119,6 @@ function Nav() {
           <>
             {myShopData && (
               <>
-                {" "}
                 <button
                   className="hidden md:flex items-center gap-1 p-2 cursor-pointer rounded-full bg-[#ff4d2d]/10 text-[#ff4d2d]"
                   onClick={() => navigate("/add-item")}

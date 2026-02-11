@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { setCity } from "../redux/userSlice.js";
+import { setCity, setState } from "../redux/userSlice.js";
 
 function useGetCity() {
   const apiKey = import.meta.env.VITE_GEOAPIKEY;
@@ -22,6 +22,8 @@ function useGetCity() {
       console.log(result?.data.results[0].city);
       console.log(result);
       dispatch(setCity(result?.data.results[0].city));
+      dispatch(setState(result?.data.results[0].state));
+      console.log(result?.data.results[0].state);
     });
   }, [userData]);
 }

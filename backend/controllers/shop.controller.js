@@ -51,3 +51,23 @@ export const createEditShop = async (req, res) => {
     });
   }
 };
+
+// getting shop
+export const getMyShop = async (req, res) => {
+  try {
+    const shop = await Shop.findOne({ owner: req.userId }).populate(
+      "owner items",
+    );
+    if (!shop) {
+      return null;
+    }
+
+    return res.status(200).json(shop);
+  } catch (error) {
+    console.log(error);
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

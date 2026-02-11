@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import authRouter from "./routes/auth.route.js";
 import cors from "cors";
 import userRouter from "./routes/user.routes.js";
+import shopRouter from "./routes/shop.routes.js";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
+app.use("/api/shop", shopRouter);
 
 app.listen(port, () => {
   connectDB();
