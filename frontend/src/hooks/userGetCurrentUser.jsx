@@ -1,11 +1,13 @@
 import axios from "axios";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { serverurl } from "../App";
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/userSlice";
 
-const useGetCurrentUser = () => {
+const userGetCurrentUser = () => {
+  // ✅ name matches your import
   const dispatch = useDispatch();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -13,18 +15,17 @@ const useGetCurrentUser = () => {
         const result = await axios.get(`${serverurl}/api/user/current`, {
           withCredentials: true,
         });
-
-        console.log("API USER:", result.data.user);
-
-        // IMPORTANT FIX
         dispatch(setUserData(result.data.user));
       } catch (error) {
         console.log("Not logged in");
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchUser();
   }, [dispatch]);
+
+  return loading; // ✅ this is what was missing
 };
 
-export default useGetCurrentUser;
+export default userGetCurrentUser;

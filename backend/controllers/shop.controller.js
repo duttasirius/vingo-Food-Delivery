@@ -1,5 +1,6 @@
 import Shop from "../models/shop.model.js";
 import uploadOnCloudinary from "../utils/cloudinary.js";
+import Item from "../models/item.model.js";
 
 export const createEditShop = async (req, res) => {
   try {
@@ -55,17 +56,22 @@ export const createEditShop = async (req, res) => {
 // getting shop
 export const getMyShop = async (req, res) => {
   try {
-    const shop = await Shop.findOne({ owner: req.userId }).populate(
-      "owner items",
-    );
+    const shop = await Shop.findOne({ owner: req.userId }).populate("owner");
+
     if (!shop) {
-      return null;
+      return res.status(404).json({
+        success: false,
+        message: "No shop found",
+      });
     }
 
-    return res.status(200).json(shop);
+    return res.status(200).json({
+      success: true,
+      shop,
+    });
   } catch (error) {
     console.log(error);
-    res.json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

@@ -3,22 +3,19 @@ import { useSelector } from "react-redux";
 import UserDashboard from "../components/UserDashboard";
 import OwnerDashboard from "../components/OwnerDashboard";
 import DeliveryDashboard from "../components/DeliveryDashboard";
-import Nav from "../components/Nav";
+import { useLocation } from "react-router-dom";
 
 const Home = () => {
   const { userData } = useSelector((state) => state.user);
+  const location = useLocation();
 
-  // ⛔ wait until userData exists
+  // wait for user
   if (!userData) {
     return <div>Loading...</div>;
   }
 
-  if (!userData) {
-    return <SignIn />;
-  }
-
   return (
-    <div className="w">
+    <div>
       {userData.role === "user" && <UserDashboard />}
       {userData.role === "owner" && <OwnerDashboard />}
       {userData.role === "deliveryBoy" && <DeliveryDashboard />}

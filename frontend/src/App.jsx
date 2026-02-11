@@ -7,47 +7,43 @@ import userGetCurrentUser from "./hooks/userGetCurrentUser";
 import { useSelector } from "react-redux";
 import Home from "./pages/Home";
 import useGetCity from "./hooks/useGetCity";
-import useGetMyShops from "./hooks/useGetMyShops";
 import CreateEditShop from "./pages/CreateEditShop";
 
 export const serverurl = "http://localhost:8000";
 
-// 4 hours 12 min need to complete
-
 const App = () => {
-  userGetCurrentUser();
+  const isLoading = userGetCurrentUser(); // ✅ return loading from hook
   useGetCity();
-  useGetMyShops();
 
-  // Getting user data from Redux store
-
-  // useSelector = React-Redux hook to read data from global store
-  // state => state.user = selects the "user" slice from Redux state
-  // { userData } = destructuring → takes only userData from that slice
-  // Component will auto re-render if userData changes in Redux
   const { userData } = useSelector((state) => state.user);
+
+  // ✅ Wait for user fetch before deciding where to redirect
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-orange-50">
+        <p className="text-orange-500 text-lg font-semibold animate-pulse">
+          Loading...
+        </p>
+      </div>
+    );
+  }
+
+  if (!userData) {
+    return (
+      <Routes>
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="*" element={<Navigate to="/signin" />} />
+      </Routes>
+    );
+  }
 
   return (
     <Routes>
-      {/* FIX: redirect old /login */}
-      <Route path="/login" element={<Navigate to="/signin" />} />
-
-      <Route
-        path="/signup"
-        element={!userData ? <SignUp /> : <Navigate to={"/"} />}
-      />
-
-      <Route
-        path="/signin"
-        element={!userData ? <SignIn /> : <Navigate to={"/"} />}
-      />
-
-      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/" element={<Home />} />
-      <Route
-        path="/create-edit-shop"
-        element={userData ? <CreateEditShop /> : <Navigate to={"/signin"} />}
-      />
+      <Route path="/create-edit-shop" element={<CreateEditShop />} />
+      <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );
 };
