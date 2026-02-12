@@ -8,6 +8,8 @@ import { useSelector } from "react-redux";
 import Home from "./pages/Home";
 import useGetCity from "./hooks/useGetCity";
 import CreateEditShop from "./pages/CreateEditShop";
+import AddItem from "./pages/AddItem";
+import EditItem from "./pages/EditItem";
 
 export const serverurl = "http://localhost:8000";
 
@@ -44,6 +46,8 @@ const App = () => {
       <Route path="/" element={<Home />} />
       <Route path="/create-edit-shop" element={<CreateEditShop />} />
       <Route path="*" element={<Navigate to="/" />} />
+      <Route path="/add-item" element={userData ? <AddItem /> : <SignIn />} />
+      <Route path="/edit-item/:itemId" element={<EditItem />} />
     </Routes>
   );
 };

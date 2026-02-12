@@ -77,6 +77,7 @@ function CreateEditShop() {
 
       if (result.data.shop) {
         dispatch(setMyShopData(result.data.shop));
+        navigate("/");
       }
     } catch (error) {
       console.log(error);
@@ -214,7 +215,7 @@ function CreateEditShop() {
         </form>
       </div>
 
-      {!myShopData && (
+      {/* {!myShopData && (
         <div className="flex justify-center items-center sm:p-6 p-5">
           <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-6 border border-gray-300">
             <div className="flex flex-col items-center text-center">
@@ -231,10 +232,10 @@ function CreateEditShop() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* ✅ Welcome section — only renders after confirmed data, no flicker */}
-      {myShopData && (
+      {/* {myShopData && (
         <div className="flex flex-col items-center gap-4 p-6 w-full max-w-2xl">
           <div className="w-full bg-white shadow-lg rounded-2xl border border-gray-200 overflow-hidden">
             <img
@@ -244,7 +245,7 @@ function CreateEditShop() {
             />
             <div className="p-6">
               <h2 className="text-2xl font-bold text-gray-800">
-                {myShopData.name}
+                this is {myShopData.name}
               </h2>
               <p className="text-gray-500 mt-1">{myShopData.address}</p>
               <p className="text-gray-500">
@@ -259,7 +260,7 @@ function CreateEditShop() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

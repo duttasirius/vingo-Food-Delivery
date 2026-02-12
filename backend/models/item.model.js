@@ -4,7 +4,7 @@ const itemSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     image: { type: String, required: true },
-    // use this way when we need to reference anything from other model
+    // use this way when we need to reference anything from other model or anywhere
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
     category: {
       type: String,
