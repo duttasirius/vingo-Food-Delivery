@@ -10,12 +10,16 @@ import useGetCity from "./hooks/useGetCity";
 import CreateEditShop from "./pages/CreateEditShop";
 import AddItem from "./pages/AddItem";
 import EditItem from "./pages/EditItem";
+import useGetShopByCity from "./hooks/useGetShopByCity";
+import userGetItemByCity from "./hooks/userGetItemByCity";
 
 export const serverurl = "http://localhost:8000";
 
 const App = () => {
   const isLoading = userGetCurrentUser(); // ✅ return loading from hook
   useGetCity();
+  useGetShopByCity();
+  userGetItemByCity();
 
   const { userData } = useSelector((state) => state.user);
 
@@ -53,3 +57,7 @@ const App = () => {
 };
 
 export default App;
+
+// OWNER LOGIN EMAIL & PASSWORD -- doemarrie0@gmail.com || admin1234
+
+// USER LOGIN EMAIL && PASSWORD -- duttatannupa447@gmail.com || admin1234

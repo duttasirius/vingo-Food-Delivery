@@ -53,9 +53,13 @@ export const createEditShop = async (req, res) => {
   }
 };
 
-// getting shop
+// getting owner shop
 export const getMyShop = async (req, res) => {
   try {
+    // find shop of logged-in owner
+    // populate("owner") → replace ownerId with full user document
+    // populate("items") → replace itemIds with full item documents
+    // without populate we only get IDs, not actual data
     const shop = await Shop.findOne({ owner: req.userId })
       .populate("owner")
       .populate("items");
@@ -74,6 +78,39 @@ export const getMyShop = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getShopByCity = async (req, res) => {
+  try {
+    const { city } = req.params;
+
+    const shops = await Shop.find({
+      // match city exactly but ignore uppercase/lowercase
+      // ^ → start of word
+      // $ → end of word
+      // ensures only exact city matches
+      // "i" flag → case insensitive
+      city: { $regex: new RegExp(`^${city}$`, "i") },
+    }).populate("items");
+
+    if (!shops) {
+      return res.json({
+        success: false,
+        message: "NO SHOPS FOUND",
+      });
+    }
+
+    return res.json({
+      success: true,
+      shops,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({
       success: false,
       message: error.message,
     });

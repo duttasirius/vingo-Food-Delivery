@@ -220,3 +220,96 @@ export const deleteItem = async (req, res) => {
     });
   }
 };
+
+export const getItemByCity = async (req, res) => {
+  try {
+    const { city } = req.params;
+
+    if (!city) {
+      return res.json({
+        success: false,
+        message: "NO CITY FOUND",
+      });
+    }
+
+    const shops = await Shop.find({
+      // match city exactly but ignore uppercase/lowercase
+      // ^ → start of word
+      // $ → end of word
+      // ensures only exact city matches
+      // "i" flag → case insensitive
+      city: { $regex: new RegExp(`^${city}$`, "i") },
+    }).populate("items");
+
+    if (shops.length === 0) {
+      return res.json({
+        success: false,
+        message: "NO SHOPS FOUND",
+      });
+    }
+
+    // shops comming from line 253 variable and store all shops id here
+    const shopIds = shops.map((shop) => shop._id);
+
+    // VISUAL REPRESENT OF THIS LINE
+    //     City: Kolkata
+
+    // Step 1 → find shops in Kolkata
+    // shops = [shop1, shop2]
+
+    // Step 2 → extract their IDs
+    // shopIds = [id1, id2]
+
+    // Step 3 → find items whose shop field matches those IDs
+    // Item.find({ shop: { $in: [id1, id2] } })
+
+    const items = await Item.find({ shop: { $in: shopIds } }).populate("shop");
+
+    //     City = Kolkata
+
+    // 1️⃣ Find shops in Kolkata
+    //    shops = [ShopA, ShopB]
+
+    // 2️⃣ Extract their IDs
+    //    shopIds = [idA, idB]
+
+    // 3️⃣ Find items where:
+    //    item.shop is idA OR idB
+
+    //    Item collection:
+    //    --------------------------------
+    //    Burger   → shop: idA   ✅ include
+    //    Pizza    → shop: idA   ✅ include
+    //    Coffee   → shop: idB   ✅ include
+    //    Noodles  → shop: idX   ❌ ignore
+
+    // 4️⃣ populate("shop")
+    //    replaces:
+    //    shop: "idA"
+    //    with:
+    //    shop: { _id: "idA", name: "The Park", city: "Kolkata" }
+    // */
+
+    // --------------------------------------------------------
+    // 🧠 WHY THIS IS NEEDED
+    // --------------------------------------------------------
+
+    // We cannot directly search items by city,
+    // because items only know their shop ID.
+    // So we:
+    //   city → shops → shopIds → items
+
+    // This acts like a JOIN between Shop and Item collections.
+
+    return res.json({
+      success: true,
+      items,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

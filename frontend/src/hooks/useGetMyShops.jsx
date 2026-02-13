@@ -11,7 +11,7 @@ function useGetMyShops() {
 
   useEffect(() => {
     // 🔥 ONLY run on home/dashboard
-    console.log("CURRENT PATH:", location.pathname);
+
     if (location.pathname !== "/") return;
 
     const fetchShop = async () => {
