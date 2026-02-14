@@ -1,6 +1,6 @@
 🍔 Food Delivery App (MERN + Realtime + Payments)
 
-A full-stack food delivery platform with Google authentication, JWT security, Razorpay payments, real user reviews, and location-based shop & item discovery.
+A full-stack food delivery platform with Google authentication, JWT security, Razorpay payments, real user reviews, and location-based  shop & item discovery with live location tracking to delivery .
 
 
 
