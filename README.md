@@ -1,43 +1,23 @@
 🍔 Food Delivery App (MERN + Realtime + Payments)
 
-A full-stack food delivery platform with Google authentication, JWT security, Razorpay payments, real user reviews, and location-based  shop & item discovery with live location tracking to delivery .
-
-
-
-
+A full-stack food delivery platform with Google authentication, JWT security, Razorpay payments, real user reviews, and location-based shop & item discovery with live location tracking to delivery .
 
 🚧 ----------------------------Actively in development — core system functional, scaling features being refined.
 
----- screenshot of UI ____
+---- screenshot of UI \_\_\_\_
+
 ## 📸 Screenshots
 
-### User Home
-![User Home](./UI-SCREENSHOT/userUI.png)
+## 📸 Screenshots
 
-### User UI 2
-![User UI](./UI-SCREENSHOT/userUI2.png)
-
-### Login Page
+![User](./UI-SCREENSHOT/userUI.png)
+![User2](./UI-SCREENSHOT/userUI2.png)
 ![Login](./UI-SCREENSHOT/login.png)
-
-### Signup Page
-![Signup](./UI-SCREENSHOT/signUp.png)
-
-### Owner Dashboard
 ![Owner Dashboard](./UI-SCREENSHOT/ownerDashboard.png)
-
-### Shop Owner Page
 ![Shop Owner](./UI-SCREENSHOT/shopOwner.png)
-
-### Add Food
 ![Add Food](./UI-SCREENSHOT/addFood.png)
-
-### Edit Food
 ![Edit Food](./UI-SCREENSHOT/editFood.png)
-
-### Owner Add Food UI
 ![Owner Add Food](./UI-SCREENSHOT/owner-add-food-UI.png)
-
 
 ✨ Key Features
 🔐 Authentication & Security
@@ -128,7 +108,7 @@ Socket.io integration
 
 Delivery tracking flow
 
-🛠 **************************Tech Stack
+🛠 ************\*\*************Tech Stack
 Frontend
 
 React
@@ -167,26 +147,24 @@ Storage
 
 Cloudinary (image uploads)
 
-
-// --- PROJECT STRUCTURE 
+// --- PROJECT STRUCTURE
 client/
- ├── components/
- ├── pages/
- ├── redux/
- ├── hooks/
+├── components/
+├── pages/
+├── redux/
+├── hooks/
 
 server/
- ├── controllers/
- ├── models/
- ├── routes/
- ├── middleware/
- ├── utils/
- ├── payments/
+├── controllers/
+├── models/
+├── routes/
+├── middleware/
+├── utils/
+├── payments/
 
-
- // 
- // Environment Variables (DEMO)
- PORT=8000
+//
+// Environment Variables (DEMO)
+PORT=8000
 MONGO_URI=your_mongo
 
 JWT_SECRET=your_secret
@@ -201,7 +179,7 @@ CLOUDINARY_NAME=xxx
 CLOUDINARY_KEY=xxx
 CLOUDINARY_SECRET=xxx
 
------------------------CLONE _______________
+-----------------------CLONE ******\_\_\_******
 git clone https://github.com/yourusername/food-delivery-app
 cd food-delivery-app
 
@@ -214,4 +192,3 @@ npm run dev
 cd client
 npm install
 npm run dev
-
