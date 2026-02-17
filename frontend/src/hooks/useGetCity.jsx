@@ -6,6 +6,7 @@ import {
   setCurrentCity,
   setcurrentState,
 } from "../redux/userSlice.js";
+import { setAddress, setLocation } from "../redux/mapSlice.js";
 
 function useGetCity() {
   const apiKey = import.meta.env.VITE_GEOAPIKEY;
@@ -14,11 +15,13 @@ function useGetCity() {
   const { userData } = useSelector((state) => state.user);
 
   useEffect(() => {
-    // need to activate my pc location
+    // need to activate my pc location , getting my current location
     navigator.geolocation.getCurrentPosition(async (position) => {
       console.log(position);
       const lattitude = position.coords.latitude;
       const longtitude = position.coords.longitude;
+
+      dispatch(setLocation({ lat: lattitude, lon: longtitude }));
 
       // api coming from geoapify site  &&  map used reverse-geocoding-api
       const result = await axios.get(
@@ -33,6 +36,7 @@ function useGetCity() {
 
       dispatch(setCurrentAddress(result?.data.results[0].formatted));
       console.log(result?.data.results[0].formatted);
+      dispatch(setAddress(result?.data.results[0].address_line2));
     });
   }, [userData]);
 }

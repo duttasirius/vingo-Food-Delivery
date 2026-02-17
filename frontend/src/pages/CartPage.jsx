@@ -53,7 +53,10 @@ function CartPage() {
                 </h2>
               </div>
 
-              <button className="px-6 py-3 bg-[#ff4d2d] text-white rounded-xl font-semibold hover:bg-[#e84324] active:scale-95 transition">
+              <button
+                onClick={() => navigate("/checkout")}
+                className="px-6 py-3 bg-[#ff4d2d] text-white rounded-xl font-semibold hover:bg-[#e84324] active:scale-95 transition"
+              >
                 Checkout
               </button>
             </div>

@@ -61,7 +61,7 @@ function AddItem() {
         { withCredentials: true },
       );
 
-      // 🔥 important fix
+      //
       dispatch(setMyShopData(result.data.shop));
       console.log(result.data);
 

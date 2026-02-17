@@ -1,12 +1,33 @@
 import mongoose from "mongoose";
 
-const orderSchema = new mongoose.Schema(
+const shopOrderItemsSchema = new mongoose.Schema({
+  item: { type: mongoose.Schema.Types.ObjectId, ref: "Item" },
+  price: Number,
+  quantity: Number,
+});
+
+const shopOrderSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    paymentMethod: { type: String, enum: ["cod", "online"] },
-    deliveryAddress: { text: String, latitude: Number, longitude: Number },
-    totalAmount: { type: Number },
-    shopOrder: [],
+    shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    subTotal: Number,
+    shopOrderItems: [shopOrderItemsSchema],
   },
   { timestamps: true },
 );
+
+const orderSchema = new mongoose.Schema(
+  {
+    //making schema to a particular model
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    paymentMethod: { type: String, enum: ["cod", "online"], required: true },
+    deliveryAddress: { text: String, latitude: Number, longitude: Number },
+    totalAmount: { type: Number },
+    shopOrder: [shopOrderSchema],
+  },
+  { timestamps: true },
+);
+
+const Order = mongoose.model("Order", orderSchema);
+
+export default Order;
