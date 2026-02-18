@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const shopOrderItemsSchema = new mongoose.Schema({
   item: { type: mongoose.Schema.Types.ObjectId, ref: "Item" },
   price: Number,
+  name: String,
   quantity: Number,
 });
 
@@ -23,7 +24,7 @@ const orderSchema = new mongoose.Schema(
     paymentMethod: { type: String, enum: ["cod", "online"], required: true },
     deliveryAddress: { text: String, latitude: Number, longitude: Number },
     totalAmount: { type: Number },
-    shopOrder: [shopOrderSchema],
+    shopOrders: [shopOrderSchema],
   },
   { timestamps: true },
 );

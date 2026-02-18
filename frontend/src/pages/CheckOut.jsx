@@ -13,6 +13,7 @@ import { FaRegCreditCard } from "react-icons/fa";
 import { FaMobileAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { FaIndianRupeeSign } from "react-icons/fa6";
+import { serverurl } from "../App";
 
 // 🗺️ RecenterMap component
 // Purpose: Whenever location in Redux changes,
@@ -129,8 +130,31 @@ function CheckOut() {
     }
   };
 
+  const handelPlaceOrder = async () => {
+    try {
+      const result = await axios.post(
+        `${serverurl}/api/order/place-order`,
+        {
+          paymentMethod,
+          totalAmount,
+          cartItems,
+          deliveryAddress: {
+            text: addressInput,
+            latitude: location.lat,
+            longitude: location.lon,
+          },
+        },
+        { withCredentials: true },
+      );
+      console.log(result.data);
+      navigate("/order-placed");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
-    setAddressInput(address);
+    setAddressInput(address || "");
   }, [address]);
   return (
     <div className="min-h-screen bg-red-50 flex items-center justify-center px-4 py-8 relative">
@@ -155,7 +179,7 @@ function CheckOut() {
           <div className="flex items-center gap-2">
             <input
               onChange={(e) => setAddressInput(e.target.value)}
-              value={addressInput}
+              value={addressInput || ""}
               type="text"
               placeholder="Enter Your Delivery Address"
               className="flex-1 border border-gray-300 rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent transition"
@@ -284,7 +308,10 @@ function CheckOut() {
           </div>
         </section>
 
-        <button className="w-full bg-[#ff4d2d] hover:bg-[#e64526] text-white py-3 rounded-xl font-semibold">
+        <button
+          onClick={handelPlaceOrder}
+          className="w-full bg-[#ff4d2d] hover:bg-[#e64526] text-white py-3 rounded-xl font-semibold"
+        >
           {paymentMethod === "cod" ? "Place Order" : "Pay & Place Order"}
         </button>
       </div>
