@@ -5,7 +5,6 @@ import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/userSlice";
 
 const userGetCurrentUser = () => {
-  // ✅ name matches your import
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
 

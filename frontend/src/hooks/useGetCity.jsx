@@ -28,14 +28,9 @@ function useGetCity() {
         `https://api.geoapify.com/v1/geocode/reverse?lat=${lattitude}&lon=${longtitude}&format=json&apiKey=${apiKey}`,
       );
 
-      console.log(result?.data.results[0].city);
-      console.log(result);
       dispatch(setCurrentCity(result?.data.results[0].city));
       dispatch(setcurrentState(result?.data.results[0].state));
-      console.log(result?.data.results[0].state);
-
       dispatch(setCurrentAddress(result?.data.results[0].formatted));
-      console.log(result?.data.results[0].formatted);
       dispatch(setAddress(result?.data.results[0].address_line2));
     });
   }, [userData]);

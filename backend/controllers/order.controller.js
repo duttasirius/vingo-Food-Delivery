@@ -1,5 +1,6 @@
 import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
+import User from "../models/user.model.js";
 
 export const placeOrder = async (req, res) => {
   try {
@@ -161,7 +162,7 @@ We are getting the VALUE stored under that key.
           subTotal,
           // we need this to send for shopitemschema model
           shopOrderItems: items.map((i) => ({
-            item: i._id,
+            item: i.id,
             price: i.price,
             quantity: i.quantity,
             name: i.name,
@@ -185,5 +186,70 @@ We are getting the VALUE stored under that key.
   } catch (error) {
     // Catch and log any runtime errors
     console.log(error);
+  }
+};
+
+export const getUserOrders = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // 🧑 Customer
+    if (user.role === "user") {
+      const orders = await Order.find({ user: req.userId })
+        .sort({ createdAt: -1 })
+        .populate("shopOrders.shop", "name")
+        .populate("shopOrders.owner", "name email mobile")
+        .populate("shopOrders.shopOrderItems.item", "name image price");
+
+      return res.json({
+        success: true,
+        orders,
+      });
+    }
+
+    // 🏪 Owner
+    if (user.role === "owner") {
+      const orders = await Order.find({ "shopOrders.owner": req.userId })
+        .sort({ createdAt: -1 })
+        .populate("shopOrders.shop", "name")
+        .populate("user", "fullName email mobile")
+        .populate("shopOrders.shopOrderItems.item", "name image price");
+
+      const filterOrders = orders.map((order) => ({
+        _id: order._id,
+        paymentMethod: order.paymentMethod,
+        user: order.user,
+        createdAt: order.createdAt,
+        deliveryAddress: order.deliveryAddress,
+
+        // 🔥 IMPORTANT: must be ARRAY
+        shopOrders: order.shopOrders.filter(
+          (o) => o.owner._id.toString() === req.userId.toString(),
+        ),
+      }));
+
+      return res.json({
+        success: true,
+        orders: filterOrders, // ALWAYS send "orders"
+      });
+    }
+
+    return res.status(403).json({
+      success: false,
+      message: "Unauthorized role",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
   }
 };
