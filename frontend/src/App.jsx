@@ -17,8 +17,11 @@ import CheckOut from "./pages/CheckOut";
 import OrderPlaced from "./pages/OrderPlaced";
 import MyOrders from "./pages/MyOrders";
 import userGetMyOrders from "./hooks/userGetMyOrders";
+import useUpdateLocation from "./hooks/useUpdateLocation";
 
 export const serverurl = "http://localhost:8000";
+
+//6 hours 15 minutes part need to completed
 
 const App = () => {
   const isLoading = userGetCurrentUser(); // ✅ return loading from hook
@@ -26,6 +29,7 @@ const App = () => {
   useGetShopByCity();
   userGetItemByCity();
   userGetMyOrders();
+  useUpdateLocation();
 
   const { userData } = useSelector((state) => state.user);
 

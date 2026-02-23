@@ -28,7 +28,7 @@ function MyOrders() {
 
         {/* ================= ORDERS LIST ================= */}
         <div className="space-y-6">
-          {Array.isArray(myOrders) && myOrders.length > 0 ? (
+          {myOrders.length > 0 ? (
             myOrders.map((order, index) =>
               userData?.role === "user" ? (
                 <UserOrderCard key={order._id || index} data={order} />

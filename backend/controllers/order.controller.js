@@ -229,7 +229,6 @@ export const getUserOrders = async (req, res) => {
         createdAt: order.createdAt,
         deliveryAddress: order.deliveryAddress,
 
-        // 🔥 IMPORTANT: must be ARRAY
         shopOrders: order.shopOrders.filter(
           (o) => o.owner._id.toString() === req.userId.toString(),
         ),
@@ -244,6 +243,45 @@ export const getUserOrders = async (req, res) => {
     return res.status(403).json({
       success: false,
       message: "Unauthorized role",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { orderId, shopId } = req.params;
+    const { status } = req.body;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    const shopOrders = order.shopOrders.find(
+      (o) => o.shop.toString() === shopId,
+    );
+
+    if (!shopOrders) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Shop order not found" });
+    }
+
+    shopOrders.status = status;
+
+    await order.save(); // always need to  save parent doc
+
+    return res.json({
+      success: true,
+      shopOrders,
     });
   } catch (error) {
     console.log(error);

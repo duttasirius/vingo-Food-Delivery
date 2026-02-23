@@ -32,3 +32,33 @@ export const getCurrentUser = async (req, res) => {
     });
   }
 };
+
+export const updateUserLocation = async (req, res) => {
+  try {
+    const { lat, lon } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      {
+        location: {
+          type: "Point",
+          // as per mapSlice.js lat , lon
+          coordinates: [lon, lat],
+        },
+      },
+      { new: true },
+    );
+    if (!user) {
+      return res.json({
+        success: false,
+        message: "no user found",
+      });
+    }
+
+    return res.json({
+      success: true,
+      location: user.location,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};

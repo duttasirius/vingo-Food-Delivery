@@ -15,7 +15,6 @@ function userGetMyOrders() {
           withCredentials: true,
         });
         dispatch(setMyOrders(result.data.orders));
-        console.log("this is user order", result.data);
       } catch (error) {
         console.log(error);
       }
