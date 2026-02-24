@@ -1,3 +1,4 @@
+import DeliveryAssingment from "../models/deliveryAssingment.model.js";
 import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
 import User from "../models/user.model.js";
@@ -277,11 +278,120 @@ export const updateOrderStatus = async (req, res) => {
 
     shopOrders.status = status;
 
+    let deliveryBoyPayLoad = [];
+
+    if (status === "out of delivery" && !shopOrders.assignment) {
+      const { longitude, latitude } = order.deliveryAddress;
+
+      const nearByDeliveryBoys = await User.find({
+        role: "deliveryBoy",
+        location: {
+          $near: {
+            // check the person order location through lat & long & return delivery boys within the 5/10 km of this order location
+            $geometry: {
+              type: "Point",
+              coordinates: [Number(longitude), Number(latitude)],
+            },
+            // coordinates based on userModel location --
+            $maxDistance: 10000,
+            // 10 km means 10000 mazor in meters
+          },
+        },
+      });
+
+      // stored all delivery boy ID within 10km radious
+      const nearById = nearByDeliveryBoys.map((b) => b._id);
+
+      // -------------------------------------------------------
+      // STEP 3: Find delivery boys who are already BUSY
+      // -------------------------------------------------------
+
+      // REF--finding from Deliveryassingment model
+      const busyIds = await DeliveryAssingment.find({
+        // Only check assignments for nearby delivery boys
+        assignedTo: { $in: nearById },
+
+        // Ignore assignments that are not active
+        status: {
+          $nin: ["brodcasted", "expired"],
+          // means:
+          // include only "assigned"
+          // because:
+          // broadcasted → not accepted yet
+          // expired → no longer valid
+        },
+      })
+
+        // -------------------------------------------------------
+        // STEP 4: Get only unique deliveryBoy IDs
+        // -------------------------------------------------------
+        // .distinct("assignedTo") returns unique deliveryBoy IDs who are currently busy.
+        .distinct("assignedTo");
+      // busyId now contains:
+      // delivery boys who are already assigned to some order
+
+      const busyIdset = new Set(busyIds.map((id) => String(id)));
+      //➡️ Convert busy delivery boy IDs into a Set of strings
+      // So you can quickly check who is busy and who is free.
+
+      const availableBoys = nearByDeliveryBoys.filter(
+        (b) => !busyIdset.has(String(b._id)),
+      );
+
+      const candidates = availableBoys.map((b) => b._id);
+
+      if (candidates.length === 0) {
+        await order.save();
+        return res.json({
+          message: "NO DELIVERY BOY AVAILABLE AT THIS TIME",
+        });
+      }
+
+      // created delivery assignment
+      const deliveryAssignment = await DeliveryAssingment.create({
+        order: order._id,
+        shop: shopOrders.shop,
+        shopOrderId: shopOrders._id,
+        broscastedTo: candidates,
+        status: "brodcasted",
+      });
+
+      // Copy the assigned delivery boy's User _id
+      // from DeliveryAssignment into this shopOrder.
+      // This makes it easy to know which rider is handling
+      // this specific shop order without querying again.
+      shopOrders.assignedDeliveryBoy = deliveryAssignment.assignedTo;
+
+      // shopOrderSchema model we need assignment id to track
+      shopOrders.assignment = deliveryAssignment._id;
+
+      deliveryBoyPayLoad = availableBoys.map((b) => ({
+        id: b._id,
+        fullName: b.fullName,
+        longitude: b.location.coordinates?.[0],
+        latitude: b.location.coordinates?.[1],
+        mobile: b.mobile,
+      }));
+    }
+
     await order.save(); // always need to  save parent doc
+
+    await order.populate("shopOrders.shop", "name");
+    await order.populate(
+      "shopOrders.assignedDeliveryBoy",
+      "fullName email mobile",
+    );
+
+    const updatedShopOrder = order.shopOrders.find(
+      (o) => o.shop._id.toString() === shopId,
+    );
 
     return res.json({
       success: true,
-      shopOrders,
+      shopOrders: updatedShopOrder,
+      assignedDeliveryBoy: updatedShopOrder?.assignedDeliveryBoy,
+      availableBoys: deliveryBoyPayLoad,
+      assignment: updatedShopOrder?.assignment._id,
     });
   } catch (error) {
     console.log(error);

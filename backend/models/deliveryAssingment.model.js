@@ -27,9 +27,9 @@ const deliveryAssingmentSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-const deliveryAssingment = mongoose.model(
-  "deliveryAssingment",
+const DeliveryAssingment = mongoose.model(
+  "DeliveryAssingment",
   deliveryAssingmentSchema,
 );
 
-export default deliveryAssingment;
+export default DeliveryAssingment;

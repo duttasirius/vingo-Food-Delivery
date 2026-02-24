@@ -1,10 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { MdEmail } from "react-icons/md";
 import { FaPhoneAlt, FaRupeeSign } from "react-icons/fa";
 import axios from "axios";
 import { serverurl } from "../App";
+import { useDispatch } from "react-redux";
+import { updateOrderStatus } from "../redux/userSlice";
 
 function OwnerOrderCard({ data }) {
+  const [availableBoys, setAvailableBoys] = useState([]);
+  console.log("STATE availableBoys:", availableBoys);
+  const dispatch = useDispatch();
   const handleUpdateStatus = async (orderId, shopId, status) => {
     try {
       const result = await axios.post(
@@ -12,6 +17,10 @@ function OwnerOrderCard({ data }) {
         { status },
         { withCredentials: true },
       );
+
+      console.log("API RESPONSE:", result.data); // 👈 ADD HERE
+      dispatch(updateOrderStatus({ orderId, shopId, status }));
+      setAvailableBoys(result.data.availableBoys);
 
       console.log("order updated", result.data);
     } catch (error) {
@@ -113,6 +122,24 @@ function OwnerOrderCard({ data }) {
                   </div>
                 </div>
               ))}
+            </div>
+            <div className="mt-3">
+              <p className="text-sm font-semibold text-gray-700">
+                Available Delivery Boys:
+              </p>
+
+              {availableBoys.length > 0 ? (
+                availableBoys.map((b) => (
+                  <div
+                    key={b.id}
+                    className="text-sm bg-white border rounded-md px-3 py-2 mt-2 shadow-sm"
+                  >
+                    {b.fullName} - {b.mobile}
+                  </div>
+                ))
+              ) : (
+                <p className="text-xs text-gray-400 mt-1">No riders yet</p>
+              )}
             </div>
           </div>
         ))}
