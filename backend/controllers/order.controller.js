@@ -278,6 +278,7 @@ export const updateOrderStatus = async (req, res) => {
 
     shopOrders.status = status;
 
+    // future we load delivery boy name , id location etc etc here
     let deliveryBoyPayLoad = [];
 
     if (status === "out of delivery" && !shopOrders.assignment) {
@@ -347,19 +348,23 @@ export const updateOrderStatus = async (req, res) => {
         });
       }
 
-      // created delivery assignment
+      // created delivery assignment means out for delivery order
       const deliveryAssignment = await DeliveryAssingment.create({
         order: order._id,
         shop: shopOrders.shop,
         shopOrderId: shopOrders._id,
+        // candidates mean delivery boy available within 10 km area || const candidates = availableBoys.map((b) => b._id);
         broscastedTo: candidates,
         status: "brodcasted",
       });
 
-      // Copy the assigned delivery boy's User _id
-      // from DeliveryAssignment into this shopOrder.
-      // This makes it easy to know which rider is handling
-      // this specific shop order without querying again.
+      // Delivery Boy clicks ACCEPT
+      //         ↓
+      // DeliveryAssignment.assignedTo = boyId (delivery boy id stored to DeliveryAssingment model)
+      //         ↓
+      // Copy boyId into -
+
+      // shopOrders.assignedDeliveryBoy (so that we can show in frotend delivery boy details name mobile)
       shopOrders.assignedDeliveryBoy = deliveryAssignment.assignedTo;
 
       // shopOrderSchema model we need assignment id to track
@@ -382,6 +387,7 @@ export const updateOrderStatus = async (req, res) => {
       "fullName email mobile",
     );
 
+    // now order contain shop name delivery boy details & we stored every thing inside updatedShoporder variable
     const updatedShopOrder = order.shopOrders.find(
       (o) => o.shop._id.toString() === shopId,
     );
@@ -399,5 +405,40 @@ export const updateOrderStatus = async (req, res) => {
       success: false,
       message: "Server error",
     });
+  }
+};
+
+export const getDeliveryBoyAssignment = async (req, res) => {
+  try {
+    const deliveryBoyId = req.userId;
+
+    // after any out for delivery status  if this delivery boy within 10km radius of any user order location & not assigned to any delivery & recived notification & fit  to DeliveryAssingment Model -- brodcastedTo ---
+    const assignment = await DeliveryAssingment.find({
+      broscastedTo: deliveryBoyId,
+      status: "brodcasted",
+    })
+      .populate("order")
+      .populate("shop");
+
+    const formatted = assignment.map((a) => {
+      return {
+        assignmentId: a._id,
+        order: a.order._id,
+        shopName: a.shop.name,
+        deliveryAddress: a.order.deliveryAddress,
+        items:
+          a.order.shopOrders.find((so) => so._id.equals(a.shopOrderId))
+            ?.shopOrderItems || [],
+        subTotal: a.order.shopOrders.find((so) => so._id.equals(a.shopOrderId))
+          ?.subTotal,
+      };
+    });
+
+    return res.json({
+      success: true,
+      formatted,
+    });
+  } catch (error) {
+    console.log(error);
   }
 };

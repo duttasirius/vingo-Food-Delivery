@@ -8,8 +8,9 @@ import { updateOrderStatus } from "../redux/userSlice";
 
 function OwnerOrderCard({ data }) {
   const [availableBoys, setAvailableBoys] = useState([]);
-  console.log("STATE availableBoys:", availableBoys);
+
   const dispatch = useDispatch();
+
   const handleUpdateStatus = async (orderId, shopId, status) => {
     try {
       const result = await axios.post(
@@ -18,7 +19,6 @@ function OwnerOrderCard({ data }) {
         { withCredentials: true },
       );
 
-      console.log("API RESPONSE:", result.data); // 👈 ADD HERE
       dispatch(updateOrderStatus({ orderId, shopId, status }));
       setAvailableBoys(result.data.availableBoys);
 
