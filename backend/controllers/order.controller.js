@@ -207,7 +207,8 @@ export const getUserOrders = async (req, res) => {
         .sort({ createdAt: -1 })
         .populate("shopOrders.shop", "name")
         .populate("shopOrders.owner", "name email mobile")
-        .populate("shopOrders.shopOrderItems.item", "name image price");
+        .populate("shopOrders.shopOrderItems.item", "name image price")
+        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
       return res.json({
         success: true,
@@ -221,7 +222,7 @@ export const getUserOrders = async (req, res) => {
         .sort({ createdAt: -1 })
         .populate("shopOrders.shop", "name")
         .populate("user", "fullName email mobile")
-        .populate("shopOrders.shopOrderItems.item", "name image price");
+        .populate("shopOrders.assignedDeliveryBoy", "fullName mobile");
 
       const filterOrders = orders.map((order) => ({
         _id: order._id,
@@ -350,6 +351,7 @@ export const updateOrderStatus = async (req, res) => {
 
       // created delivery assignment means out for delivery order
       const deliveryAssignment = await DeliveryAssingment.create({
+        // orderId coming from frontend params  & stored order variable above
         order: order._id,
         shop: shopOrders.shop,
         shopOrderId: shopOrders._id,
@@ -408,35 +410,116 @@ export const updateOrderStatus = async (req, res) => {
   }
 };
 
+// need to understand this properly tomorrow
 export const getDeliveryBoyAssignment = async (req, res) => {
   try {
     const deliveryBoyId = req.userId;
 
-    // after any out for delivery status  if this delivery boy within 10km radius of any user order location & not assigned to any delivery & recived notification & fit  to DeliveryAssingment Model -- brodcastedTo ---
-    const assignment = await DeliveryAssingment.find({
-      broscastedTo: deliveryBoyId,
-      status: "brodcasted",
+    const assignments = await DeliveryAssingment.find({
+      $or: [
+        { broscastedTo: deliveryBoyId, status: "brodcasted" }, // new orders
+      ],
     })
       .populate("order")
       .populate("shop");
 
-    const formatted = assignment.map((a) => {
+    const formatted = assignments.map((a) => {
+      const shopOrder = a.order.shopOrders.find(
+        (so) => so._id.toString() === a.shopOrderId.toString(),
+      );
+
       return {
         assignmentId: a._id,
         order: a.order._id,
         shopName: a.shop.name,
         deliveryAddress: a.order.deliveryAddress,
-        items:
-          a.order.shopOrders.find((so) => so._id.equals(a.shopOrderId))
-            ?.shopOrderItems || [],
-        subTotal: a.order.shopOrders.find((so) => so._id.equals(a.shopOrderId))
-          ?.subTotal,
+        items: shopOrder?.shopOrderItems || [],
+        subTotal: shopOrder?.subTotal,
+        status: a.status,
       };
     });
 
     return res.json({
       success: true,
       formatted,
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export const acceptOrder = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+
+    const assignment = await DeliveryAssingment.findById(assignmentId);
+
+    if (!assignment) {
+      return res.json({
+        success: false,
+        message: "assingments not found",
+      });
+    }
+
+    if (assignment.status !== "brodcasted") {
+      return res.json({
+        success: false,
+        message: "assingments is expired",
+      });
+    }
+
+    //  Check if this delivery boy is already busy with another order
+    // ---------------------------------------------------------------
+    // We search in DeliveryAssignment collection for assignments where:
+    // assignedTo = req.userId
+    // → means orders already accepted by THIS delivery boy
+    //
+    // status: { $nin: ["brodcasted", "completed"] }
+    // → $nin = "not in"
+    // → ignore:
+    //    - "brodcasted"  → only sent, not accepted yet (still free)
+    //    - "completed"   → already finished
+    const alredayAssigned = await DeliveryAssingment.findOne({
+      assignedTo: req.userId,
+      status: { $nin: ["brodcasted", "completed"] },
+    });
+
+    if (alredayAssigned) {
+      return res.json({
+        success: false,
+        message: "You already have an active delivery",
+      });
+    }
+
+    // the logged-in delivery boy accepted the order his id gonna save inside DeliveryAssingment model-(assignedTo) & Order model-shopOrderSchema -assignedDeliveryBoy we can see frontend delivery boy details
+    assignment.assignedTo = req.userId;
+
+    //statues changed now no one else gonna accepted this
+    assignment.status = "assigned";
+
+    assignment.acceptedAt = new Date();
+
+    await assignment.save();
+
+    //“Go to the Orders model & compare inside assignment=deliveryAssingmentSchema ID
+    //And findById() returns the full document so now inside order i've everything
+    // take the id inside deliveryAssingmentSchema & find if this ID exists in order model if found returen full object & stored order variable
+    const order = await Order.findById(assignment.order);
+
+    if (!order) {
+      return res.json({ message: "Order not found" });
+    }
+
+    const shoporder = order.shopOrders.find(
+      (so) => so._id.toString() === assignment.shopOrderId.toString(),
+    );
+    shoporder.assignedDeliveryBoy = req.userId;
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: "ORDER ACCEPTED",
     });
   } catch (error) {
     console.log(error);

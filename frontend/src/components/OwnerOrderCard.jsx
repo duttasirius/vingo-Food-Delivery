@@ -7,76 +7,68 @@ import { useDispatch } from "react-redux";
 import { updateOrderStatus } from "../redux/userSlice";
 
 function OwnerOrderCard({ data }) {
-  const [availableBoys, setAvailableBoys] = useState([]);
-
+  const [availableBoysMap, setAvailableBoysMap] = useState({});
   const dispatch = useDispatch();
 
   const handleUpdateStatus = async (orderId, shopId, status) => {
     try {
-      const result = await axios.post(
+      const res = await axios.post(
         `${serverurl}/api/order/update-status/${orderId}/${shopId}`,
         { status },
         { withCredentials: true },
       );
 
       dispatch(updateOrderStatus({ orderId, shopId, status }));
-      setAvailableBoys(result.data.availableBoys);
 
-      console.log("order updated", result.data);
-    } catch (error) {
-      console.log(error);
+      // store available boys per shopOrder
+      setAvailableBoysMap((prev) => ({
+        ...prev,
+        [shopId]: res.data.availableBoys || [],
+      }));
+    } catch (err) {
+      console.log(err);
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-6 space-y-6 hover:shadow-lg transition duration-300">
-      {/* ================= CUSTOMER INFO ================= */}
-      <div className="border-b pb-4 space-y-2">
-        <p className="text-lg font-semibold text-gray-800">
-          {data?.user?.fullName || "No Name"}
+    <div className="bg-white rounded-2xl shadow-md border p-6 space-y-6">
+      {/* CUSTOMER */}
+      <div className="border-b pb-4">
+        <p className="text-lg font-semibold">{data?.user?.fullName}</p>
+        <p className="text-sm text-gray-500 flex gap-2 items-center">
+          <MdEmail /> {data?.user?.email}
         </p>
-
-        <p className="flex items-center gap-2 text-sm text-gray-600">
-          <MdEmail className="text-orange-500" />
-          {data?.user?.email || "No Email"}
-        </p>
-
-        <p className="flex items-center gap-2 text-sm text-gray-600">
-          <FaPhoneAlt className="text-orange-500" />
-          {data?.user?.mobile || "No Phone"}
+        <p className="text-sm text-gray-500 flex gap-2 items-center">
+          <FaPhoneAlt /> {data?.user?.mobile}
         </p>
       </div>
 
-      {/* ================= DELIVERY INFO ================= */}
-      <div className="border-b pb-4 space-y-1">
-        <p className="text-gray-700 font-medium">
-          {data?.deliveryAddress?.text || "No address"}
-        </p>
-
-        <p className="text-xs text-gray-500">
-          Lat: {data?.deliveryAddress?.latitude} | Lon:{" "}
-          {data?.deliveryAddress?.longitude}
+      {/* ADDRESS */}
+      <div className="border-b pb-4">
+        <p>{data?.deliveryAddress?.text}</p>
+        <p className="text-xs text-gray-400">
+          {data?.deliveryAddress?.latitude}, {data?.deliveryAddress?.longitude}
         </p>
       </div>
 
-      {/* ================= SHOP ORDERS ================= */}
-      <div className="space-y-5">
-        {data?.shopOrders?.map((shopOrder, shopIndex) => (
+      {/* SHOP ORDERS */}
+      {data?.shopOrders?.map((shopOrder) => {
+        const availableBoys = availableBoysMap[shopOrder.shop?._id] || [];
+
+        return (
           <div
-            key={shopIndex}
-            className="bg-orange-50 border border-orange-100 rounded-xl p-5 space-y-4"
+            key={shopOrder._id}
+            className="bg-orange-50 border rounded-xl p-5 space-y-4"
           >
-            {/* ---- Header ---- */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-              <p className="font-semibold text-gray-800 flex items-center gap-1">
-                Subtotal:
-                <FaRupeeSign className="text-sm" />
-                {shopOrder?.subTotal}
+            {/* HEADER */}
+            <div className="flex justify-between">
+              <p className="font-semibold flex items-center gap-1">
+                Subtotal <FaRupeeSign /> {shopOrder?.subTotal}
               </p>
 
-              <div className="flex items-center gap-5">
-                <span className="text-sm font-bold text-orange-500 ">
-                  Status: {shopOrder.status}
+              <div className="flex gap-4 items-center">
+                <span className="text-orange-500 font-bold">
+                  {shopOrder.status}
                 </span>
 
                 <select
@@ -84,66 +76,70 @@ function OwnerOrderCard({ data }) {
                   onChange={(e) =>
                     handleUpdateStatus(
                       data._id,
-                      shopOrder.shop?._id, // ← correct
+                      shopOrder.shop?._id,
                       e.target.value,
                     )
                   }
-                  className="border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
+                  className="border px-2 py-1 rounded"
                 >
                   <option value="pending">Pending</option>
                   <option value="preparing">Preparing</option>
-                  <option value="out of delivery">Out of delivery</option>
+                  <option value="out of delivery">Out for delivery</option>
                   <option value="delivered">Delivered</option>
                 </select>
               </div>
             </div>
 
-            {/* ---- Items ---- */}
-            <div className="space-y-3">
-              {shopOrder?.shopOrderItems?.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-4 bg-white p-3 rounded-lg border border-gray-100 shadow-sm"
-                >
-                  <img
-                    src={item?.item?.image}
-                    alt={item?.name}
-                    className="w-16 h-16 rounded-lg object-cover border"
-                  />
-
-                  <div className="flex-1">
-                    <p className="font-medium text-gray-800">{item?.name}</p>
-
-                    <p className="text-sm text-gray-600 flex items-center gap-1">
-                      QTY: {item?.quantity} ×{" "}
-                      <FaRupeeSign className="text-xs" />
-                      {item?.price}
-                    </p>
-                  </div>
+            {/* ITEMS */}
+            {shopOrder?.shopOrderItems?.map((item) => (
+              <div key={item._id} className="flex gap-3 bg-white p-3 rounded">
+                <img
+                  src={item?.item?.image}
+                  className="w-14 h-14 object-cover rounded"
+                />
+                <div>
+                  <p className="font-medium">{item?.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {item.quantity} × ₹{item.price}
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
+
+            {/* DELIVERY SECTION */}
             <div className="mt-3">
               <p className="text-sm font-semibold text-gray-700">
-                Available Delivery Boys:
+                Delivery Status
               </p>
 
-              {availableBoys.length > 0 ? (
+              {/* 1️⃣ ASSIGNED RIDER */}
+              {shopOrder.assignedDeliveryBoy ? (
+                <div className="bg-green-50 border rounded-md px-3 py-2 mt-2">
+                  🚚 Assigned:
+                  <br />
+                  {shopOrder.assignedDeliveryBoy.fullName} —{" "}
+                  {shopOrder.assignedDeliveryBoy.mobile}
+                </div>
+              ) : availableBoys.length > 0 ? (
+                /* 2️⃣ AVAILABLE RIDERS */
                 availableBoys.map((b) => (
                   <div
                     key={b.id}
-                    className="text-sm bg-white border rounded-md px-3 py-2 mt-2 shadow-sm"
+                    className="bg-white border rounded-md px-3 py-2 mt-2"
                   >
-                    {b.fullName} - {b.mobile}
+                    {b.fullName} — {b.mobile}
                   </div>
                 ))
               ) : (
-                <p className="text-xs text-gray-400 mt-1">No riders yet</p>
+                /* 3️⃣ WAITING */
+                <p className="text-xs text-gray-400 mt-2">
+                  Waiting for rider to accept…
+                </p>
               )}
             </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }

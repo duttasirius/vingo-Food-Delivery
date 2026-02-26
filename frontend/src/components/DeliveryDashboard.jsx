@@ -19,6 +19,20 @@ function DeliveryDashboard() {
     }
   };
 
+  const acceptOrder = async (assignmentId) => {
+    try {
+      const result = await axios.get(
+        `${serverurl}/api/order/accept-order/${assignmentId}`,
+        { withCredentials: true },
+      );
+
+      console.log(result.data);
+      getAssignments();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     if (userData?._id) getAssignments();
   }, [userData]);
@@ -89,7 +103,10 @@ function DeliveryDashboard() {
                   {a.items.length} items
                 </span>
 
-                <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow">
+                <button
+                  onClick={() => acceptOrder(a.assignmentId)}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow"
+                >
                   Accept Order
                 </button>
               </div>
