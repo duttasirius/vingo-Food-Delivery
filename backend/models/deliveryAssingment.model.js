@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const deliveryAssingmentSchema = new mongoose.Schema(
   {
+    // this order Id is the after user place a new order
     order: { type: mongoose.Schema.Types.ObjectId, ref: "Order" },
     shop: { type: mongoose.Schema.Types.ObjectId, ref: "Shop" },
     shopOrderId: { type: mongoose.Schema.Types.ObjectId, required: true },

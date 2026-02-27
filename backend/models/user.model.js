@@ -22,10 +22,12 @@ const userSchema = new mongoose.Schema(
 
     otpExpires: { type: Date },
 
+    // this is geoJson while we saved location
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },
-      // at coordinates we need to wrote 1st longtitude & then lattitude
+      // // at coordinates we need to wrote 1st longtitude & then lattitude
       coordinates: { type: [Number], default: [0, 0] },
+      // inside Geojson coordinates always saved longitude then lattitude
     },
   },
 

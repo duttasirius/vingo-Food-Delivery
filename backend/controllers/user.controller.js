@@ -35,13 +35,14 @@ export const getCurrentUser = async (req, res) => {
 
 export const updateUserLocation = async (req, res) => {
   try {
+    // location coming from updateLocation.jsx page updateLocation(lat , lon) function way
     const { lat, lon } = req.body;
     const user = await User.findByIdAndUpdate(
       req.userId,
       {
         location: {
           type: "Point",
-          // as per mapSlice.js lat , lon
+          // always need to wrote longitude 1st
           coordinates: [lon, lat],
         },
       },

@@ -525,3 +525,121 @@ export const acceptOrder = async (req, res) => {
     console.log(error);
   }
 };
+
+// showing delivery boy current assigned order
+
+export const getCurrentOrder = async (req, res) => {
+  try {
+    const assignment = await DeliveryAssingment.findOne({
+      assignedTo: req.userId,
+      status: "assigned",
+    })
+      .populate("shop", "name")
+      .populate("assignedTo", "fullName email mobile location")
+      .populate({
+        path: "order",
+        populate: {
+          path: "user",
+          select: "fullName email location mobile",
+        },
+      });
+
+    if (!assignment) {
+      return res.json({
+        success: false,
+        message: "ASSIGNMENT NOT FOUND",
+      });
+    }
+
+    if (!assignment.order) {
+      return res.json({
+        success: false,
+        message: "ORDER NOT FOUND",
+      });
+    }
+
+    if (!assignment.shopOrderId) {
+      return res.json({
+        success: false,
+        message: "SHOP ORDER ID NOT FOUND IN ASSIGNMENT",
+      });
+    }
+
+    if (!Array.isArray(assignment.order.shopOrders)) {
+      return res.json({
+        success: false,
+        message: "SHOP ORDERS NOT FOUND",
+      });
+    }
+
+    // Find correct shopOrder inside order
+    const shopOrder = assignment.order.shopOrders.find(
+      (so) => so._id.toString() === assignment.shopOrderId.toString(),
+    );
+
+    if (!shopOrder) {
+      return res.json({
+        success: false,
+        message: "SHOP ORDER NOT FOUND",
+      });
+    }
+
+    let deliveryBoyLocation = { lat: null, lon: null };
+    // MongoDB stores GeoJSON coordinates as:
+    // coordinates: [longitude, latitude]
+    //
+    // assignment.assignedTo -> refers to the delivery boy (UserModel)
+    // assignedTo.location.coordinates -> contains [lon, lat]
+    //
+    // coordinates[0] = longitude
+    // coordinates[1] = latitude
+    //
+    if (
+      assignment.assignedTo?.location?.coordinates &&
+      assignment.assignedTo.location.coordinates.length >= 2
+    ) {
+      deliveryBoyLocation.lat = assignment.assignedTo.location.coordinates[1];
+      deliveryBoyLocation.lon = assignment.assignedTo.location.coordinates[0];
+    }
+
+    let CustomerLocation = { lat: null, lon: null };
+
+    if (assignment.order.deliveryAddress) {
+      CustomerLocation.lat = assignment.order.deliveryAddress.latitude || null;
+      CustomerLocation.lon = assignment.order.deliveryAddress.longitude || null;
+    }
+
+    return res.json({
+      success: true,
+      // have order id because .populate order line above inside assignment variable
+      // assignment.order._id
+      //
+      // This is the ORIGINAL Order document _id.
+      // It was created when the user placed the order.
+      //
+      // Flow:
+      // 1️⃣ User places order → MongoDB creates Order._id
+      // 2️⃣ That same Order._id is stored inside DeliveryAssignment.order (as reference)
+      // 3️⃣ We populate("order") → now assignment.order becomes full Order document
+      // 4️⃣ assignment.order._id → gives the main Order ID
+      //
+      // Important:
+      // - This does NOT create a new ID.
+      // - This does NOT modify the database.
+      // - It only sends the existing Order ID to frontend.
+      // - This ID uniquely identifies the entire order.
+      _id: assignment.order._id,
+      user: assignment.order.user,
+      shopOrder,
+      deliveryAddress: assignment.order.deliveryAddress,
+      deliveryBoyLocation,
+      CustomerLocation,
+    });
+  } catch (error) {
+    console.log("GET CURRENT ORDER ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

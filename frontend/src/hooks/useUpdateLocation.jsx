@@ -22,13 +22,13 @@ function useUpdateLocation() {
 
       // watchPosition continuously tracks the user's GPS location in real time.
       // It runs every time the device location changes (movement or GPS refresh).
-      // `pos` is the position object returned by the browser's Geolocation API.
+      // `pos & coords`  is the position object returned by the browser's Geolocation API. coming from browser
       //
-      // pos.coords contains:
+      // inside  pos.coords contains:
       //   - latitude  → user's current latitude
       //   - longitude → user's current longitude
       //
-      // We send these coordinates to our backend using updateLocation()
+      // We send these coordinates to our backend using updateLocation function params( lat & lon)
       // so the server can store the user's latest location.
     });
   }, [userData]);
