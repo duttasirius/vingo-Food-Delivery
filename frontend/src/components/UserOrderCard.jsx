@@ -1,5 +1,6 @@
 import React from "react";
 import { FaRupeeSign } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 function UserOrderCard({ data }) {
   // this func trun backend timestamps into redable format date/month/year
@@ -11,6 +12,8 @@ function UserOrderCard({ data }) {
       year: "numeric",
     });
   };
+
+  const navigate = useNavigate();
 
   return (
     <div className="bg-white rounded-2xl shadow-md border border-orange-100 p-5 space-y-5 hover:shadow-lg transition">
@@ -101,7 +104,10 @@ function UserOrderCard({ data }) {
           <p className="text-lg font-bold text-gray-800">
             Total: ₹{data.totalAmount}
           </p>
-          <button className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-lg font-semibold shadow-sm transition">
+          <button
+            onClick={() => navigate(`/track-order/${data._id}`)}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-lg font-semibold shadow-sm transition"
+          >
             Track Order
           </button>
         </div>

@@ -11,6 +11,7 @@ function DeliveryDashboard() {
 
   const [availableAssignments, setAvailableAssignments] = useState([]);
   const [currentOrder, setCurrentOrder] = useState(null);
+  const [showOtpBox, setShowOtpBox] = useState(false);
 
   // ---------------------------
   // Fetch Available Assignments
@@ -35,6 +36,7 @@ function DeliveryDashboard() {
   // ---------------------------
   // Accept Order
   // ---------------------------
+  // coming from getCurrentOrder controller
   const acceptOrder = async (assignmentId) => {
     try {
       const result = await axios.get(
@@ -74,6 +76,10 @@ function DeliveryDashboard() {
         error.response?.data || error.message,
       );
     }
+  };
+
+  const handleSendOtp = () => {
+    setShowOtpBox(true);
   };
 
   // ---------------------------
@@ -157,6 +163,29 @@ function DeliveryDashboard() {
 
             <div>
               <DeliveryBoyTracking data={currentOrder} />
+              {!showOtpBox ? (
+                <button
+                  className="mt-4 w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-xl shadow-md hover:bg-green-600 active:scale-95 transition-all duration-300"
+                  onClick={handleSendOtp}
+                >
+                  Mark As Delivered
+                </button>
+              ) : (
+                <div className="mt-4 p-4  border rounded-xl bg-orange-50">
+                  <p>
+                    Enter OTP send to{" "}
+                    <span className="text-orange-500">
+                      {currentOrder.user.fullName}
+                    </span>
+                  </p>
+                  <input
+                    type="text"
+                    className="w-full border px-3 py-2 rounded-lg mb-3 focus:outline-none  focus:ring-2 focus:ring-orange-400"
+                    placeholder="ENTER OTP"
+                  />
+                  <button>Submit OTP</button>
+                </div>
+              )}
             </div>
           </div>
         )}

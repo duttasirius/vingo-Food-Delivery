@@ -587,7 +587,7 @@ export const getCurrentOrder = async (req, res) => {
     let deliveryBoyLocation = { lat: null, lon: null };
     // MongoDB stores GeoJSON coordinates as:
     // coordinates: [longitude, latitude]
-    //
+    //inside assignment have current DeliveryAssingment model Schema
     // assignment.assignedTo -> refers to the delivery boy (UserModel)
     // assignedTo.location.coordinates -> contains [lon, lat]
     //
@@ -633,7 +633,80 @@ export const getCurrentOrder = async (req, res) => {
       shopOrder,
       deliveryAddress: assignment.order.deliveryAddress,
       deliveryBoyLocation,
+      deliveryBoy: assignment.assignedTo, // for showing at frontend showing delivery boy name
       CustomerLocation,
+    });
+  } catch (error) {
+    console.log("GET CURRENT ORDER ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const getOrderById = async (req, res) => {
+  try {
+    // Extract orderId from request URL params
+    // Example route: /api/order/get-order/:orderId
+    const { orderId } = req.params;
+
+    // Find the main Order document by its _id
+    // IMPORTANT: This is the ORIGINAL Order created when user placed order
+    // It contains an array called `shopOrders`
+    const order = await Order.findById(orderId)
+
+      // -------------------------
+      // Populate 1️⃣ Shop Details
+      // -------------------------
+      // Inside Order → shopOrders[] → each shopOrder has `shop` field (ObjectId)
+      // That ObjectId refers to Shop model
+      // After populate, shopOrder.shop becomes full Shop document instead of just id
+      .populate({
+        path: "shopOrders.shop",
+        model: "Shop",
+      })
+
+      // -------------------------
+      // Populate 2️⃣ Assigned Delivery Boy
+      // -------------------------
+      // Inside shopOrders → assignedDeliveryBoy (ObjectId ref User)
+      // After populate, we get full User document of delivery boy
+      .populate({
+        path: "shopOrders.assignedDeliveryBoy",
+        model: "User",
+      })
+
+      // -------------------------
+      // Populate 3️⃣ Items Inside Each Shop Order
+      // -------------------------
+      // Structure:
+      // Order → shopOrders[] → shopOrderItems[] → item (ObjectId ref Item)
+      // This replaces item id with full Item document
+      .populate({
+        path: "shopOrders.shopOrderItems.item",
+        model: "Item",
+      })
+
+      // -------------------------
+      // Convert Mongoose Document to Plain JS Object
+      // -------------------------
+      // .lean() makes query faster
+      // Returns normal JS object instead of Mongoose document
+      // We cannot use .save() after this
+      .lean();
+
+    // If no order found with this id
+    if (!order) {
+      return res.json({
+        success: false,
+        message: "NO ORDER FOUND",
+      });
+    }
+
+    return res.json({
+      success: true,
+      order,
     });
   } catch (error) {
     console.log("GET CURRENT ORDER ERROR:", error);
