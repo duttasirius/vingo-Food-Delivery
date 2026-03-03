@@ -182,12 +182,6 @@ export const verifyOtp = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    console.log("BODY:", req.body);
-    console.log("DB OTP:", user?.resetOtp);
-    console.log("USER INPUT OTP:", otp);
-    console.log("EXPIRE:", user?.otpExpires);
-    console.log("NOW:", Date.now());
-
     // user not found
     if (!user) {
       return res.status(400).json({

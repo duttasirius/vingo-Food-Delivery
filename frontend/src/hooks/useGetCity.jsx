@@ -28,7 +28,21 @@ function useGetCity() {
         `https://api.geoapify.com/v1/geocode/reverse?lat=${lattitude}&lon=${longtitude}&format=json&apiKey=${apiKey}`,
       );
 
-      dispatch(setCurrentCity(result?.data.results[0].city));
+      // dispatch(setCurrentCity(result?.data.results[0].city));
+      const resultData = result?.data?.results?.[0];
+
+      const city =
+        resultData?.city ||
+        resultData?.town ||
+        resultData?.village ||
+        resultData?.municipality ||
+        resultData?.district ||
+        resultData?.county ||
+        resultData?.suburb ||
+        resultData?.state ||
+        "Unknown";
+
+      dispatch(setCurrentCity(city));
       dispatch(setcurrentState(result?.data.results[0].state));
       dispatch(setCurrentAddress(result?.data.results[0].formatted));
       dispatch(setAddress(result?.data.results[0].address_line2));

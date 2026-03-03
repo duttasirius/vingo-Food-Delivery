@@ -32,3 +32,21 @@ export const sendOtpMail = async (to, otp) => {
 `,
   });
 };
+
+export const sendOtpToUser = async (user, otp) => {
+  try {
+    console.log("Sending to:", user.email);
+
+    await transporter.sendMail({
+      from: process.env.EMAIL,
+      to: user.email,
+      subject: "Delivery OTP",
+      html: `<p>Your OTP is ${otp}</p>`,
+    });
+
+    console.log("Email sent successfully");
+  } catch (err) {
+    console.log("MAIL ERROR:", err);
+    throw err; // rethrow so controller catches it
+  }
+};

@@ -11,26 +11,48 @@ import {
   TileLayer,
 } from "react-leaflet";
 
-const deliveryBoyIcon = new L.icon({
+/* ---------------- Icons ---------------- */
+
+const deliveryBoyIcon = new L.Icon({
   iconUrl: scooter,
   iconSize: [40, 40],
   iconAnchor: [20, 40],
 });
 
-const customerIcon = new L.icon({
+const customerIcon = new L.Icon({
   iconUrl: home,
   iconSize: [40, 40],
   iconAnchor: [20, 40],
 });
 
+/* ---------------- Component ---------------- */
+
 function DeliveryBoyTracking({ data }) {
-  const deliveryBoyLat = data.deliveryBoyLocation.lat;
-  const deliveryBoyLon = data.deliveryBoyLocation.lon;
+  // Extract coordinates safely
+  const deliveryBoyLocation = data?.deliveryBoyLocation;
+  const customerLocation = data?.customerLocation;
 
-  const customerLat = data.CustomerLocation.lat;
-  const customerLon = data.CustomerLocation.lon;
+  // If data not available, don't render map
+  if (!deliveryBoyLocation || !customerLocation) {
+    return null;
+  }
 
-  // ✅ FIXED polyline path
+  const deliveryBoyLat = deliveryBoyLocation.lat;
+  const deliveryBoyLon = deliveryBoyLocation.lon;
+
+  const customerLat = customerLocation.lat;
+  const customerLon = customerLocation.lon;
+
+  // Extra safety check
+  if (
+    deliveryBoyLat == null ||
+    deliveryBoyLon == null ||
+    customerLat == null ||
+    customerLon == null
+  ) {
+    return null;
+  }
+
   const path = [
     [deliveryBoyLat, deliveryBoyLon],
     [customerLat, customerLon],
@@ -39,51 +61,34 @@ function DeliveryBoyTracking({ data }) {
   const center = [deliveryBoyLat, deliveryBoyLon];
 
   return (
-    <div className="w-full max-w-4xl mx-auto mt-6">
-      {/* Card */}
-      <div className="relative bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-        {/* Header */}
-
+    <div className="w-full mt-6">
+      <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
         {/* Map */}
-        <div className="h-[350px] sm:h-[450px] w-full">
-          <MapContainer center={center} zoom={17} className="h-full w-full z-0">
+        <div className="h-[350px] w-full">
+          <MapContainer center={center} zoom={15} className="h-full w-full">
             <TileLayer
               attribution="&copy; OpenStreetMap contributors"
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            {/* <Marker
-              position={[deliveryBoyLat, deliveryBoyLon]}
-              icon={deliveryBoyIcon}
-            >
-              <Popup>🛵 Delivery Boy</Popup>
-            </Marker> */}
-
+            {/* Delivery Boy Marker */}
             <Marker
-              key={data.deliveryBoy?._id}
               position={[deliveryBoyLat, deliveryBoyLon]}
               icon={deliveryBoyIcon}
             >
-              <Popup>
-                <div className="text-sm">
-                  <p className="font-semibold text-gray-800">
-                    🛵 {data.deliveryBoy?.fullName}
-                  </p>
-                  <p className="text-gray-500 text-xs">
-                    📞 {data.deliveryBoy?.mobile}
-                  </p>
-                </div>
-              </Popup>
+              <Popup>🛵 Delivery Partner</Popup>
             </Marker>
 
+            {/* Customer Marker */}
             <Marker position={[customerLat, customerLon]} icon={customerIcon}>
               <Popup>🏠 Customer Location</Popup>
             </Marker>
 
+            {/* Line Between Them */}
             <Polyline
               positions={path}
               pathOptions={{
-                color: "#22c55e", // tailwind green-500
+                color: "#22c55e",
                 weight: 5,
               }}
             />
@@ -91,9 +96,9 @@ function DeliveryBoyTracking({ data }) {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between items-center px-5 py-4 text-sm text-gray-600 bg-gray-50">
-          <span>📍 Real-time location</span>
-          <span className="font-medium text-green-600">On the way</span>
+        <div className="flex justify-between items-center px-4 py-3 text-sm bg-gray-50">
+          <span className="text-gray-600">📍 Live Tracking</span>
+          <span className="text-green-600 font-semibold">On the way</span>
         </div>
       </div>
     </div>

@@ -12,6 +12,7 @@ function DeliveryDashboard() {
   const [availableAssignments, setAvailableAssignments] = useState([]);
   const [currentOrder, setCurrentOrder] = useState(null);
   const [showOtpBox, setShowOtpBox] = useState(false);
+  const [otp, setOtp] = useState("");
 
   // ---------------------------
   // Fetch Available Assignments
@@ -78,10 +79,39 @@ function DeliveryDashboard() {
     }
   };
 
-  const handleSendOtp = () => {
-    setShowOtpBox(true);
+  const sendOtp = async () => {
+    try {
+      const result = await axios.post(
+        `${serverurl}/api/order/send-delivery-otp`,
+        {
+          orderId: currentOrder._id,
+          shopOrderId: currentOrder.shopOrder._id,
+        },
+        { withCredentials: true },
+      );
+      console.log(result.data);
+      setShowOtpBox(true);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
+  const verifyOtp = async () => {
+    try {
+      const result = await axios.post(
+        `${serverurl}/api/order/verify-delivery-otp`,
+        {
+          orderId: currentOrder._id,
+          shopOrderId: currentOrder.shopOrder._id,
+          otp,
+        },
+        { withCredentials: true },
+      );
+      console.log(result.data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
   // ---------------------------
   // Load Data On Login
   // ---------------------------
@@ -162,11 +192,27 @@ function DeliveryDashboard() {
             </div>
 
             <div>
-              <DeliveryBoyTracking data={currentOrder} />
+              {/* need to understand this  */}
+              {userData?.location?.coordinates &&
+                currentOrder?.deliveryAddress?.latitude &&
+                currentOrder?.deliveryAddress?.longitude && (
+                  <DeliveryBoyTracking
+                    data={{
+                      deliveryBoyLocation: {
+                        lat: userData.location.coordinates[1],
+                        lon: userData.location.coordinates[0],
+                      },
+                      customerLocation: {
+                        lat: currentOrder.deliveryAddress.latitude,
+                        lon: currentOrder.deliveryAddress.longitude,
+                      },
+                    }}
+                  />
+                )}
               {!showOtpBox ? (
                 <button
                   className="mt-4 w-full bg-green-500 text-white font-semibold py-2 px-4 rounded-xl shadow-md hover:bg-green-600 active:scale-95 transition-all duration-300"
-                  onClick={handleSendOtp}
+                  onClick={sendOtp}
                 >
                   Mark As Delivered
                 </button>
@@ -179,11 +225,18 @@ function DeliveryDashboard() {
                     </span>
                   </p>
                   <input
+                    onChange={(e) => setOtp(e.target.value)}
+                    value={otp}
                     type="text"
                     className="w-full border px-3 py-2 rounded-lg mb-3 focus:outline-none  focus:ring-2 focus:ring-orange-400"
                     placeholder="ENTER OTP"
                   />
-                  <button>Submit OTP</button>
+                  <button
+                    onClick={verifyOtp}
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-4 rounded-xl shadow-md transition-all duration-300 active:scale-95 focus:outline-none focus:ring-2 focus:ring-orange-400"
+                  >
+                    Submit OTP
+                  </button>
                 </div>
               )}
             </div>

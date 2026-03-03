@@ -27,6 +27,29 @@ const shopOrderSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    deliveryOtp: {
+      type: String,
+      default: null,
+    },
+    deliveredAt: {
+      type: Date,
+      default: null,
+    },
+
+    otpExpires: { type: Date, default: null },
+
+    payment: {
+      type: Boolean,
+      default: "",
+    },
+    razorpayOrderId: {
+      type: String,
+      default: "",
+    },
+    razorpayPeymentId: {
+      type: String,
+      default: "",
+    },
   },
 
   { timestamps: true },

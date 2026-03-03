@@ -19,6 +19,8 @@ function Nav() {
   );
   //when i need to read the value useselector
   const { myShopData } = useSelector((state) => state.owner);
+  console.log("userData:", userData);
+  console.log("currentCity:", currentCity);
 
   const [showInfo, setShowInfo] = useState(false);
   const [showSearch, setShowSearch] = useState(false);

@@ -3,6 +3,16 @@ import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
 import User from "../models/user.model.js";
 
+import Razorpay from "razorpay";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+let instance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
 export const placeOrder = async (req, res) => {
   try {
     const { cartItems, paymentMethod, deliveryAddress, totalAmount } = req.body;
@@ -172,6 +182,29 @@ We are getting the VALUE stored under that key.
       }),
     );
 
+    if (paymentMethod === "online") {
+      const razorOrder = await instance.orders.create({
+        amount: Math.round(totalAmount * 100),
+        currency: "INR",
+        receipt: `receipt_${Date.now()}`,
+      });
+      const newOrder = await Order.create({
+        user: req.userId,
+        paymentMethod,
+        deliveryAddress,
+        totalAmount,
+        shopOrders,
+        razorpayOrderId: razorOrder.id,
+        payments: false,
+      });
+
+      return res.json({
+        razorOrder,
+        orderId: newOrder._id,
+        key_id: process.env.RAZORPAY_KEY_ID,
+      });
+    }
+
     const newOrder = await Order.create({
       user: req.userId,
       paymentMethod,
@@ -188,6 +221,14 @@ We are getting the VALUE stored under that key.
     // Catch and log any runtime errors
     console.log(error);
   }
+};
+
+export const verifyPayments = async (req, res) => {
+  try {
+    const { razorpay_payment_id, orderId } = req.body;
+
+    const payment = instance.payments.fetch(razorpay_payment_id);
+  } catch (error) {}
 };
 
 export const getUserOrders = async (req, res) => {
@@ -710,6 +751,98 @@ export const getOrderById = async (req, res) => {
     });
   } catch (error) {
     console.log("GET CURRENT ORDER ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const sendDeliveryOtp = async (req, res) => {
+  try {
+    const { orderId, shopOrderId } = req.body;
+
+    const order = await Order.findById(orderId).populate("user");
+
+    const shopOrder = order.shopOrders.id(shopOrderId);
+
+    if (!order || !shopOrder) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID",
+      });
+    }
+
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+    // Generates a random 4-digit number (1000–9999) and converts it to a string.
+    // Math.random() → gives 0–0.9999
+    // * 9000 → expands range to 0–8999
+    // + 1000 → shifts range to 1000–9999
+    // Math.floor() → removes decimal
+    // toString() → converts number to string
+    shopOrder.deliveryOtp = otp;
+    shopOrder.otpExpires = Date.now() + 5 * 60 * 1000;
+
+    await order.save();
+    // this is from mail.js function
+    await sendOtpToUser(order.user, otp);
+
+    return res.json({
+      success: true,
+      message: `OTP sent successfully to ${order.user.fullName}`,
+    });
+  } catch (error) {
+    console.log("GET CURRENT ORDER ERROR:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const verifyDeliveryOtp = async (req, res) => {
+  try {
+    const { orderId, shopOrderId, otp } = req.body;
+
+    const order = await Order.findById(orderId).populate("user");
+
+    const shopOrder = order.shopOrders.id(shopOrderId);
+
+    if (!order || !shopOrder) {
+      return res.json({
+        success: false,
+        message: "NO ORDER FOUND",
+      });
+    }
+
+    if (
+      shopOrder.deliveryOtp !== otp ||
+      !shopOrder.otpExpires ||
+      shopOrder.otpExpires < Date.now()
+    ) {
+      return res.json({
+        success: false,
+        message: "INVALID OTP",
+      });
+    }
+
+    ((shopOrder.status = "delivered"), (shopOrder.deliveredAt = Date.now()));
+
+    await order.save();
+
+    // DELETED THE DELIVRED ORDER DETAILS
+    await DeliveryAssingment.deleteOne({
+      shopOrderId: shopOrder._id,
+      orderId: order._id,
+      assignedTo: shopOrder.assignedDeliveryBoy,
+    });
+
+    return res.json({
+      success: true,
+      message: "ORDER DELIVERED",
+    });
+  } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
       message: "Server error",
