@@ -313,3 +313,30 @@ export const getItemByCity = async (req, res) => {
     });
   }
 };
+
+export const getItemsByShop = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+
+    const shop = await Shop.findById(shopId).populate("items");
+
+    if (!shop) {
+      return res.json({
+        success: false,
+        message: "NO SHOPS FOUND",
+      });
+    }
+
+    return res.json({
+      success: true,
+      shop,
+      items: shop.items,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

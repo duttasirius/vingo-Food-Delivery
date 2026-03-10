@@ -19,6 +19,7 @@ import MyOrders from "./pages/MyOrders";
 import userGetMyOrders from "./hooks/userGetMyOrders";
 import useUpdateLocation from "./hooks/useUpdateLocation";
 import TrackOrderPage from "./pages/TrackOrderPage";
+import Shop from "./pages/Shop";
 
 export const serverurl = "http://localhost:8000";
 
@@ -68,6 +69,7 @@ const App = () => {
       <Route path="/order-placed" element={<OrderPlaced />} />
       <Route path="/my-orders" element={<MyOrders />} />
       <Route path="/track-order/:orderId" element={<TrackOrderPage />} />
+      <Route path="/shop/:shopId" element={<Shop />} />
     </Routes>
   );
 };

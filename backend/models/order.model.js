@@ -40,7 +40,7 @@ const shopOrderSchema = new mongoose.Schema(
 
     payment: {
       type: Boolean,
-      default: "",
+      default: false,
     },
     razorpayOrderId: {
       type: String,

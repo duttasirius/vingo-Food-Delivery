@@ -184,6 +184,7 @@ We are getting the VALUE stored under that key.
 
     if (paymentMethod === "online") {
       const razorOrder = await instance.orders.create({
+        // amount coming from frontend totalAmount
         amount: Math.round(totalAmount * 100),
         currency: "INR",
         receipt: `receipt_${Date.now()}`,
@@ -227,8 +228,46 @@ export const verifyPayments = async (req, res) => {
   try {
     const { razorpay_payment_id, orderId } = req.body;
 
-    const payment = instance.payments.fetch(razorpay_payment_id);
-  } catch (error) {}
+    const payment = await instance.payments.fetch(razorpay_payment_id);
+
+    if (!payment || payment.status !== "captured") {
+      return res.json({
+        success: false,
+        message: "PAYMENT FAILED",
+      });
+    }
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.json({
+        success: false,
+        message: "NO ORDER FOUND",
+      });
+    }
+
+    // update payment status inside shopOrders
+    order.shopOrders.forEach((shopOrder) => {
+      shopOrder.payment = true;
+      shopOrder.razorpayPeymentId = razorpay_payment_id;
+    });
+
+    await order.save();
+
+    await order.populate("shopOrders.shopOrderItems.item", "name image price");
+    await order.populate("shopOrders.shop", "name");
+
+    return res.json({
+      success: true,
+      message: "PAYMENT VERIFIED",
+      order,
+    });
+  } catch (error) {
+    res.json({
+      success: false,
+      message: error.message,
+    });
+  }
 };
 
 export const getUserOrders = async (req, res) => {

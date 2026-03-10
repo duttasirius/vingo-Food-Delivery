@@ -1,15 +1,32 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Nav from "./Nav";
 import { categories } from "../category";
 import CategoryCard from "./CategoryCard";
 import { FaChevronCircleLeft, FaChevronCircleRight } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import FoodCard from "./FoodCard";
+import { useNavigate } from "react-router-dom";
 
 function UserDashboard() {
   const { currentCity, shopsInMyCity, itemsInMyCity } = useSelector(
     (state) => state.user,
   );
+
+  const [updatedItemList, setUpdatedItemList] = useState([]);
+  const navigate = useNavigate();
+
+  const handleFilterByCategory = (category) => {
+    if (category === "All") {
+      setUpdatedItemList(itemsInMyCity);
+    } else {
+      const filterdList = itemsInMyCity.filter((i) => i.category === category);
+      setUpdatedItemList(filterdList);
+    }
+  };
+
+  useEffect(() => {
+    setUpdatedItemList(itemsInMyCity);
+  }, [itemsInMyCity]);
 
   const cateScrollref = useRef();
   const shopScrollref = useRef();
@@ -47,7 +64,12 @@ function UserDashboard() {
             className="flex gap-4 overflow-x-auto px-10 pb-2 scroll-smooth"
           >
             {categories.map((cat, index) => (
-              <CategoryCard key={index} name={cat.category} image={cat.image} />
+              <CategoryCard
+                onClick={() => handleFilterByCategory(cat.category)}
+                key={index}
+                name={cat.category}
+                image={cat.image}
+              />
             ))}
           </div>
 
@@ -77,7 +99,12 @@ function UserDashboard() {
             className="flex gap-4 overflow-x-auto px-10 pb-2 scroll-smooth"
           >
             {shopsInMyCity?.map((shop, index) => (
-              <CategoryCard key={index} name={shop.name} image={shop.image} />
+              <CategoryCard
+                key={index}
+                name={shop.name}
+                image={shop.image}
+                onClick={() => navigate(`/shop/${shop._id}`)}
+              />
             ))}
           </div>
 
@@ -107,7 +134,7 @@ function UserDashboard() {
           gap-6
         "
         >
-          {itemsInMyCity?.map((item, index) => (
+          {updatedItemList?.map((item, index) => (
             <FoodCard key={index} data={item} />
           ))}
         </div>
