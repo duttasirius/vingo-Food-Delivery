@@ -340,3 +340,60 @@ export const getItemsByShop = async (req, res) => {
     });
   }
 };
+
+export const rating = async (req, res) => {
+  try {
+    const { itemId, rating } = req.body;
+
+    if (!itemId || !rating) {
+      return res.json({
+        success: false,
+        message: "ITEM & RATING IS REQUIRED",
+      });
+    }
+
+    if (rating < 1 || rating > 5) {
+      return res.json({
+        success: false,
+        message: "RATING MUST BE BETWEEN 1- 5",
+      });
+    }
+
+    const item = await Item.findById(itemId);
+
+    if (!item) {
+      return res.json({
+        success: false,
+        message: "NO ITEM FOUND",
+      });
+    }
+
+    // finding how many user review the food
+    const newCount = item.rating.count + 1;
+
+    const newAverage =
+      (item.rating.average * item.rating.count + rating) / newCount;
+
+    //     item.rating.average → Current average rating of the item
+    // item.rating.count → Total number of users who rated the item
+    // rating → New rating submitted by the current user
+    // newCount → Updated rating count after this user rates
+
+    item.rating.count = newCount;
+
+    item.rating.average = newAverage;
+
+    await item.save();
+
+    return res.json({
+      success: true,
+      rating: item.rating,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

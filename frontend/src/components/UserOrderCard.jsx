@@ -1,8 +1,12 @@
-import React from "react";
+import axios from "axios";
+import React, { useState } from "react";
 import { FaRupeeSign } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { serverurl } from "../App";
 
 function UserOrderCard({ data }) {
+  const [selectedRating, setSelectedRating] = useState({}); //itemId:rating stored in key pair value
+
   // this func trun backend timestamps into redable format date/month/year
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -14,6 +18,23 @@ function UserOrderCard({ data }) {
   };
 
   const navigate = useNavigate();
+
+  const handlerating = async (itemId, rating) => {
+    try {
+      await axios.post(
+        `${serverurl}/api/item/rating`,
+        { itemId, rating },
+        { withCredentials: true },
+      );
+
+      setSelectedRating((prev) => ({
+        ...prev,
+        [itemId]: rating,
+      }));
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-md border border-orange-100 p-5 space-y-5 hover:shadow-lg transition">
@@ -79,6 +100,19 @@ function UserOrderCard({ data }) {
                       {item.price}
                     </p>
                   </div>
+
+                  {shopOrder.status === "out of delivery" && (
+                    <div className="flex space-x-1 mt-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          className={`text-lg ${selectedRating[item.item._id] >= star ? "text-yellow-500" : "text-gray-400"}`}
+                          onClick={() => handlerating(item.item._id, star)}
+                        >
+                          ☆
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
