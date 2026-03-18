@@ -42,11 +42,13 @@ const shopOrderSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // this id created when user click pay now before payment gateway popup
     razorpayOrderId: {
       type: String,
       default: "",
     },
-    razorpayPeymentId: {
+    // this payment id created after succesfull payment
+    razorpayPaymentId: {
       type: String,
       default: "",
     },

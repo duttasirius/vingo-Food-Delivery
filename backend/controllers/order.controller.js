@@ -182,10 +182,12 @@ We are getting the VALUE stored under that key.
       }),
     );
 
+    // online payment system
     if (paymentMethod === "online") {
       const razorOrder = await instance.orders.create({
         // amount coming from frontend totalAmount
         amount: Math.round(totalAmount * 100),
+        // need to stored amount in paisa
         currency: "INR",
         receipt: `receipt_${Date.now()}`,
       });
@@ -195,17 +197,18 @@ We are getting the VALUE stored under that key.
         deliveryAddress,
         totalAmount,
         shopOrders,
+        //**Create a backend API endpoint that generates a Razorpay order (`razorpayOrderId`) when the user clicks “Pay Now”, and send it to the frontend to initiate payment.**
         razorpayOrderId: razorOrder.id,
-        payments: false,
+        payment: false,
       });
 
       return res.json({
         razorOrder,
         orderId: newOrder._id,
-        key_id: process.env.RAZORPAY_KEY_ID,
       });
     }
 
+    // CASH ON DELIVERY PAYMENT
     const newOrder = await Order.create({
       user: req.userId,
       paymentMethod,
@@ -249,7 +252,7 @@ export const verifyPayments = async (req, res) => {
     // update payment status inside shopOrders
     order.shopOrders.forEach((shopOrder) => {
       shopOrder.payment = true;
-      shopOrder.razorpayPeymentId = razorpay_payment_id;
+      shopOrder.razorpayPaymentId = razorpay_payment_id;
     });
 
     await order.save();
@@ -880,6 +883,39 @@ export const verifyDeliveryOtp = async (req, res) => {
       success: true,
       message: "ORDER DELIVERED",
     });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const getTodayOrderdelivires = async (req, res) => {
+  try {
+    const deliveryBoyId = req.userId;
+    const startsofday = new Date();
+
+    // set when count new day start formatted  hours , min , sec , mili-sec
+    startsofday.setHours();
+
+    // 🔍 Fetch orders delivered TODAY by a specific delivery boy (current loggedin delivery boy)
+    // - Matches orders where at least ONE shopOrder item:
+    //   • is assigned to this delivery boy (current logged in delivery boy id)
+    //   • has status = "delivered"
+    //   • was delivered after start of the day (today)
+    // - Uses $elemMatch to ensure all conditions apply to the SAME item in the array
+
+    const order = await Order.find({
+      shopOrders: {
+        $elemMatch: {
+          assignedDeliveryBoy: deliveryBoyId,
+          status: "delivered",
+          deliveredAt: { $gte: startsofday },
+        },
+      },
+    }).lean();
   } catch (error) {
     console.log(error);
     return res.status(500).json({
