@@ -14,6 +14,7 @@ import { FaMobileAlt } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { FaIndianRupeeSign } from "react-icons/fa6";
 import { serverurl } from "../App";
+import { Handler } from "leaflet";
 
 // 🗺️ RecenterMap component
 // Purpose: Whenever location in Redux changes,
@@ -146,11 +147,65 @@ function CheckOut() {
         },
         { withCredentials: true },
       );
-      console.log(result.data);
-      navigate("/order-placed");
+
+      if (paymentMethod === "cod") {
+        console.log(result.data);
+        navigate("/order-placed");
+      } else {
+        // orderId & razororder coming from backend
+        const orderId = result.data.orderId;
+        // razorOrder created when user click pay now razorpay created an Id
+        const razorOrder = result.data.razorOrder;
+        openRazorpayWindow(orderId, razorOrder);
+      }
     } catch (error) {
       console.log(error);
     }
+  };
+
+  // this varibale processing & verifying the payment
+  const openRazorpayWindow = (orderId, razorOrder) => {
+    // "razororder" is from backend when the popup window open its create a razorpay._id that razororder id saved backend & send to frontend
+
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+      amount: razorOrder.amount,
+      currency: "INR",
+      name: "Vingo Food delivery App",
+      description: "Food Delivery website",
+      order_id: razorOrder.id,
+
+      method: {
+        card: true,
+        upi: true,
+        netbanking: true,
+        wallet: true,
+      },
+
+      handler: async function (response) {
+        try {
+          const result = await axios.post(
+            `${serverurl}/api/order/verify-payments`,
+            {
+              razorpay_payment_id: response.razorpay_payment_id,
+              orderId,
+            },
+            { withCredentials: true },
+          );
+          if (result.data.success) {
+            navigate("/order-placed");
+          }
+        } catch (error) {
+          console.log(error);
+        }
+      },
+    };
+
+    // new window.Razorpay(options) creates the payment instance that lets you open and control the Razorpay checkout UI 1st step
+    const rzp = new window.Razorpay(options);
+
+    // 2nd step this line open razorpay popup
+    rzp.open();
   };
 
   useEffect(() => {
