@@ -100,9 +100,10 @@ function UserOrderCard({ data }) {
                       {item.price}
                     </p>
                   </div>
-
+                  {/* LATER I NEED TO CHANGE THE STATUS  */}
                   {shopOrder.status === "out of delivery" && (
                     <div className="flex space-x-1 mt-2">
+                      {/* NEED TO UNDERSTAND THIS RATING PART  */}
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           className={`text-lg ${selectedRating[item.item._id] >= star ? "text-yellow-500" : "text-gray-400"}`}

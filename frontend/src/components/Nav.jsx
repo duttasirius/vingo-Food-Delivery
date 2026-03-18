@@ -11,7 +11,7 @@ import { FaPlus } from "react-icons/fa6";
 import { TbReceipt2 } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
 import { serverurl } from "../App";
-import { setUserData } from "../redux/userSlice";
+import { setSearchItems, setUserData } from "../redux/userSlice";
 
 function Nav() {
   const { userData, currentCity, cartItems } = useSelector(
@@ -41,25 +41,29 @@ function Nav() {
     }
   };
 
-  // const handleSearchItems = async () => {
-  //   try {
-  //     const result = await axios.get(
-  //       `${serverUrl}/api/item/search-items?query=${query}&currentCity=${currentcurrentCity}`,
-  //       { withCredentials: true },
-  //     );
-  //     dispatch(setSearchItems(result.data));
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  // };
+  const handleSearchItems = async () => {
+    try {
+      const result = await axios.get(
+        `${serverurl}/api/item/search-items?query=${query}&city=${currentCity}`,
+        { withCredentials: true },
+      );
+      if (result.data.success) {
+        dispatch(setSearchItems(result.data.items));
+      } else {
+        dispatch(setSearchItems([]));
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
-  // useEffect(() => {
-  //   if (query) {
-  //     handleSearchItems();
-  //   } else {
-  //     dispatch(setSearchItems(null));
-  //   }
-  // }, [query]);
+  useEffect(() => {
+    if (query) {
+      handleSearchItems();
+    } else {
+      dispatch(setSearchItems(null));
+    }
+  }, [query]);
 
   if (!userData) return null;
 

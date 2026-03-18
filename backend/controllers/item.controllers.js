@@ -397,3 +397,62 @@ export const rating = async (req, res) => {
     });
   }
 };
+
+export const searchItems = async (req, res) => {
+  try {
+    // user's question coming from request body mostly from search inputs
+    const { query, city } = req.query;
+
+    if (!query || !city) {
+      return res.json({
+        success: false,
+        message: "QUERY AND CITY REQUIRED",
+      });
+    }
+
+    const shops = await Shop.find({
+      // match city exactly but ignore uppercase/lowercase
+      // ^ → start of word
+      // $ → end of word
+      // ensures only exact city matches
+      // "i" flag → case insensitive
+      city: { $regex: new RegExp(`^${city}$`, "i") },
+    }).populate("items");
+
+    // Shop.find() returns an array → check length
+    if (shops.length === 0) {
+      return res.json({
+        success: false,
+        message: "NO SHOPS FOUND",
+      });
+    }
+
+    // store all shop IDs
+    const shopId = shops.map((s) => s._id);
+
+    // find items that belong to any of the shops in shopId array
+    // $in = match any value inside the array
+    // example: shopId = [shop1, shop2] → returns items from those shops only
+    const items = await Item.find({
+      // find only those items which id store in shopid
+      shop: { $in: shopId },
+
+      // search by name OR category
+      $or: [
+        { name: { $regex: query, $options: "i" } },
+        { category: { $regex: query, $options: "i" } },
+      ],
+    }).populate("shop", "name image");
+
+    return res.json({
+      success: true,
+      items,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.json({
+      success: false,
+      message: error.message,
+    });
+  }
+};

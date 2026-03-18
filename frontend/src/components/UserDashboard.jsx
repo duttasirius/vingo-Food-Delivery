@@ -8,9 +8,8 @@ import FoodCard from "./FoodCard";
 import { useNavigate } from "react-router-dom";
 
 function UserDashboard() {
-  const { currentCity, shopsInMyCity, itemsInMyCity } = useSelector(
-    (state) => state.user,
-  );
+  const { currentCity, shopsInMyCity, itemsInMyCity, searchItems } =
+    useSelector((state) => state.user);
 
   const [updatedItemList, setUpdatedItemList] = useState([]);
   const navigate = useNavigate();
@@ -43,6 +42,24 @@ function UserDashboard() {
   return (
     <div>
       <Nav />
+
+      {searchItems && (
+        <div className="w-full max-w-6xl flex flex-col gap-5 items-start p-5 bg-white shadow-md rounded-2xl mt-4">
+          <h1 className="text-gray-900 text-3xl font-semibold border-b pb-2 border-gray-200">
+            Search result
+          </h1>
+
+          {searchItems.length > 0 ? (
+            <div className="w-full h-auto flex flex-wrap gap-6 justify-center">
+              {searchItems.map((item) => (
+                <FoodCard data={item} key={item._id} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500">No results found</p>
+          )}
+        </div>
+      )}
 
       {/* MAIN CONTAINER */}
       <div className="w-full max-w-7xl mx-auto flex flex-col gap-8 px-4 mt-28">
