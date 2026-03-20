@@ -22,6 +22,14 @@ const userSchema = new mongoose.Schema(
 
     otpExpires: { type: Date },
 
+    socketId: {
+      type: String,
+    },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
+
     // this is geoJson while we saved location
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },

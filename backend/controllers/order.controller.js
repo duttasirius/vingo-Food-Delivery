@@ -2,6 +2,7 @@ import DeliveryAssingment from "../models/deliveryAssingment.model.js";
 import Order from "../models/order.model.js";
 import Shop from "../models/shop.model.js";
 import User from "../models/user.model.js";
+import { sendOtpToUser } from "../utils/mail.js";
 
 import Razorpay from "razorpay";
 import dotenv from "dotenv";
@@ -76,8 +77,8 @@ export const placeOrder = async (req, res) => {
           throw new Error("Shop not found");
         }
 
-        // inbuild JS function if JS find key(like priorly stored this line -- Object.keys(groupItemByShop).map(async (shopId) it returns the paired key-value automatically & stored thats how i've got items like burger pizza inside items varibale  )
         const items = groupItemByShop[shopId];
+
         /*
 ===========================
 GROUP ITEMS BY SHOP NOTES
@@ -159,7 +160,6 @@ groupItemByShop["s2"] → items of shop s2
 We are NOT getting shopId again.
 We are getting the VALUE stored under that key.
 
-
 */
 
         const subTotal = items.reduce(
@@ -171,7 +171,6 @@ We are getting the VALUE stored under that key.
           shop: shop._id,
           owner: shop.owner._id,
           subTotal,
-          // we need this to send for shopitemschema model
           shopOrderItems: items.map((i) => ({
             item: i.id,
             price: i.price,
@@ -182,22 +181,22 @@ We are getting the VALUE stored under that key.
       }),
     );
 
-    // online payment system
+    // =========================
+    // ONLINE PAYMENT
+    // =========================
     if (paymentMethod === "online") {
       const razorOrder = await instance.orders.create({
-        // amount coming from frontend totalAmount
         amount: Math.round(totalAmount * 100),
-        // need to stored amount in paisa
         currency: "INR",
         receipt: `receipt_${Date.now()}`,
       });
+
       const newOrder = await Order.create({
         user: req.userId,
         paymentMethod,
         deliveryAddress,
         totalAmount,
         shopOrders,
-        //**Create a backend API endpoint that generates a Razorpay order (`razorpayOrderId`) when the user clicks “Pay Now”, and send it to the frontend to initiate payment.**
         razorpayOrderId: razorOrder.id,
         payment: false,
       });
@@ -208,7 +207,9 @@ We are getting the VALUE stored under that key.
       });
     }
 
-    // CASH ON DELIVERY PAYMENT
+    // =========================
+    // CASH ON DELIVERY
+    // =========================
     const newOrder = await Order.create({
       user: req.userId,
       paymentMethod,
@@ -217,12 +218,44 @@ We are getting the VALUE stored under that key.
       shopOrders,
     });
 
+    await newOrder.populate("shopOrders.owner", "name socketId");
+    await newOrder.populate("user", "name email mobile socketId"); // ✅ FIXED
+
+    const io = req.app.get("io");
+
+    if (io) {
+      // 🔥 OWNER UPDATE
+      newOrder.shopOrders.forEach((shopOrder) => {
+        const ownerSocketId = shopOrder.owner?.socketId;
+
+        console.log("COD Owner socket:", ownerSocketId);
+
+        if (ownerSocketId) {
+          io.to(ownerSocketId).emit("newOrder", {
+            _id: newOrder._id,
+            paymentMethod: newOrder.paymentMethod,
+            user: newOrder.user,
+            shopOrders: shopOrder,
+            createdAt: newOrder.createdAt,
+            deliveryAddress: newOrder.deliveryAddress,
+            payment: newOrder.payment,
+          });
+        }
+      });
+
+      // 🔥 USER UPDATE (ADDED FIX)
+      const userSocketId = newOrder.user?.socketId;
+
+      if (userSocketId) {
+        io.to(userSocketId).emit("orderUpdated", newOrder);
+      }
+    }
+
     return res.json({
       success: true,
       newOrder,
     });
   } catch (error) {
-    // Catch and log any runtime errors
     console.log(error);
   }
 };
@@ -232,44 +265,58 @@ export const verifyPayments = async (req, res) => {
     const { razorpay_payment_id, orderId } = req.body;
 
     const payment = await instance.payments.fetch(razorpay_payment_id);
-
     if (!payment || payment.status !== "captured") {
-      return res.json({
-        success: false,
-        message: "PAYMENT FAILED",
-      });
+      return res.json({ success: false, message: "PAYMENT FAILED" });
     }
 
     const order = await Order.findById(orderId);
-
     if (!order) {
-      return res.json({
-        success: false,
-        message: "NO ORDER FOUND",
-      });
+      return res.json({ success: false, message: "NO ORDER FOUND" });
     }
 
-    // update payment status inside shopOrders
+    // ✅ Set payment on each shopOrder
     order.shopOrders.forEach((shopOrder) => {
       shopOrder.payment = true;
       shopOrder.razorpayPaymentId = razorpay_payment_id;
     });
-
     await order.save();
 
+    // ✅ No duplicate populates + socketId included
     await order.populate("shopOrders.shopOrderItems.item", "name image price");
     await order.populate("shopOrders.shop", "name");
 
-    return res.json({
-      success: true,
-      message: "PAYMENT VERIFIED",
-      order,
-    });
+    await newOrder.populate("shopOrders.owner", "name socketId");
+    await newOrder.populate("user", "name email mobile socketId");
+
+    const io = req.app.get("io");
+
+    if (io) {
+      newOrder.shopOrders.forEach((shopOrder) => {
+        const ownerSocketId = shopOrder.owner?.socketId;
+
+        if (ownerSocketId) {
+          io.to(ownerSocketId).emit("newOrder", {
+            _id: newOrder._id,
+            paymentMethod: newOrder.paymentMethod,
+            user: newOrder.user,
+            shopOrders: shopOrder,
+            createdAt: newOrder.createdAt,
+            deliveryAddress: newOrder.deliveryAddress,
+            payment: false,
+          });
+        }
+      });
+
+      const userSocketId = newOrder.user?.socketId;
+
+      if (userSocketId) {
+        io.to(userSocketId).emit("orderUpdated", newOrder);
+      }
+    }
+
+    return res.json({ success: true, message: "PAYMENT VERIFIED", order });
   } catch (error) {
-    res.json({
-      success: false,
-      message: error.message,
-    });
+    res.json({ success: false, message: error.message });
   }
 };
 
@@ -313,6 +360,7 @@ export const getUserOrders = async (req, res) => {
         user: order.user,
         createdAt: order.createdAt,
         deliveryAddress: order.deliveryAddress,
+        payment: order.payment,
 
         shopOrders: order.shopOrders.filter(
           (o) => o.owner._id.toString() === req.userId.toString(),
@@ -868,14 +916,15 @@ export const verifyDeliveryOtp = async (req, res) => {
       });
     }
 
-    ((shopOrder.status = "delivered"), (shopOrder.deliveredAt = Date.now()));
+    shopOrder.status = "delivered";
+    shopOrder.deliveredAt = Date.now();
 
     await order.save();
 
     // DELETED THE DELIVRED ORDER DETAILS
     await DeliveryAssingment.deleteOne({
       shopOrderId: shopOrder._id,
-      orderId: order._id,
+      order: order._id,
       assignedTo: shopOrder.assignedDeliveryBoy,
     });
 
@@ -898,7 +947,7 @@ export const getTodayOrderdelivires = async (req, res) => {
     const startsofday = new Date();
 
     // set when count new day start formatted  hours , min , sec , mili-sec
-    startsofday.setHours();
+    startsofday.setHours(0, 0, 0, 0);
 
     // 🔍 Fetch orders delivered TODAY by a specific delivery boy (current loggedin delivery boy)
     // - Matches orders where at least ONE shopOrder item:
@@ -907,7 +956,7 @@ export const getTodayOrderdelivires = async (req, res) => {
     //   • was delivered after start of the day (today)
     // - Uses $elemMatch to ensure all conditions apply to the SAME item in the array
 
-    const order = await Order.find({
+    const orders = await Order.find({
       shopOrders: {
         $elemMatch: {
           assignedDeliveryBoy: deliveryBoyId,
@@ -916,6 +965,8 @@ export const getTodayOrderdelivires = async (req, res) => {
         },
       },
     }).lean();
+
+    let todayDeliveries = [];
   } catch (error) {
     console.log(error);
     return res.status(500).json({

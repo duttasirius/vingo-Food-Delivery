@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Route, Routes, Navigate } from "react-router-dom";
 import SignUp from "./pages/SignUp";
 import SignIn from "./pages/SignIn";
 import ForgotPassword from "./pages/ForgotPassword";
 import userGetCurrentUser from "./hooks/userGetCurrentUser";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Home from "./pages/Home";
 import useGetCity from "./hooks/useGetCity";
 import CreateEditShop from "./pages/CreateEditShop";
@@ -20,6 +20,8 @@ import userGetMyOrders from "./hooks/userGetMyOrders";
 import useUpdateLocation from "./hooks/useUpdateLocation";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import Shop from "./pages/Shop";
+import { io } from "socket.io-client";
+import { setSocket } from "./redux/userSlice";
 
 export const serverurl = "http://localhost:8000";
 
@@ -27,13 +29,35 @@ export const serverurl = "http://localhost:8000";
 
 const App = () => {
   const isLoading = userGetCurrentUser(); // ✅ return loading from hook
+  const dispatch = useDispatch();
   useGetCity();
   useGetShopByCity();
   userGetItemByCity();
   userGetMyOrders();
   useUpdateLocation();
 
-  const { userData } = useSelector((state) => state.user);
+  const { userData, socket } = useSelector((state) => state.user);
+
+  // -------------------------- SOCKET IO PART ---------------------
+  useEffect(() => {
+    const socketInstance = io(serverurl, { withCredentials: true });
+
+    socketInstance.on("connect", () => {
+      console.log("Connected:", socketInstance.id);
+    });
+
+    dispatch(setSocket(socketInstance));
+
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!socket || !userData?._id) return;
+
+    socket.emit("identity", { userId: userData._id });
+  }, [socket, userData]);
 
   // ✅ Wait for user fetch before deciding where to redirect
   if (isLoading) {

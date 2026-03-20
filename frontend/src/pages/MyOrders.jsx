@@ -1,13 +1,41 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { IoIosArrowRoundBack } from "react-icons/io";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import OwnerOrderCard from "../components/OwnerOrderCard";
 import UserOrderCard from "../components/UserOrderCard";
+import { setMyOrders } from "../redux/userSlice";
 
 function MyOrders() {
-  const { userData, myOrders } = useSelector((state) => state.user);
+  const { userData, myOrders, socket } = useSelector((state) => state.user);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const updateOrders = (order) => {
+      dispatch(
+        setMyOrders((prev) => {
+          const exists = prev.find((o) => o._id === order._id);
+
+          if (exists) {
+            return prev.map((o) => (o._id === order._id ? order : o));
+          }
+
+          return [order, ...prev];
+        }),
+      );
+    };
+
+    socket.on("newOrder", updateOrders);
+    socket.on("orderUpdated", updateOrders);
+
+    return () => {
+      socket.off("newOrder", updateOrders);
+      socket.off("orderUpdated", updateOrders);
+    };
+  }, [socket]);
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-b from-orange-50 to-orange-100 flex justify-center px-4 py-8">

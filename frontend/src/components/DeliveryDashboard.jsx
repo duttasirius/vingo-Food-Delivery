@@ -107,7 +107,21 @@ function DeliveryDashboard() {
         },
         { withCredentials: true },
       );
+
       console.log(result.data);
+
+      if (result.data.success) {
+        // ✅ RESET UI
+        setShowOtpBox(false);
+        setOtp("");
+
+        // 🔥 IMPORTANT
+        setCurrentOrder(null);
+
+        // OR re-fetch fresh data
+        getCurrentOrder();
+        getAssignments();
+      }
     } catch (error) {
       console.log(error);
     }
