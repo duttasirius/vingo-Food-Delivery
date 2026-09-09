@@ -22,13 +22,12 @@ import TrackOrderPage from "./pages/TrackOrderPage";
 import Shop from "./pages/Shop";
 import { io } from "socket.io-client";
 import { setSocket } from "./redux/userSlice";
+import AiFoodAssistant from "./components/AiFoodAssistant";
 
-export const serverurl = "http://localhost:8000";
-
-//6 hours 15 minutes part need to completed
+export const serverurl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000";
 
 const App = () => {
-  const isLoading = userGetCurrentUser(); // ✅ return loading from hook
+  const isLoading = userGetCurrentUser();
   const dispatch = useDispatch();
   useGetCity();
   useGetShopByCity();
@@ -38,68 +37,54 @@ const App = () => {
 
   const { userData, socket } = useSelector((state) => state.user);
 
-  // -------------------------- SOCKET IO PART ---------------------
   useEffect(() => {
     const socketInstance = io(serverurl, { withCredentials: true });
-
-    socketInstance.on("connect", () => {
-      console.log("Connected:", socketInstance.id);
-    });
-
+    socketInstance.on("connect", () => console.log("Connected:", socketInstance.id));
     dispatch(setSocket(socketInstance));
-
-    return () => {
-      socketInstance.disconnect();
-    };
+    return () => socketInstance.disconnect();
   }, []);
 
   useEffect(() => {
     if (!socket || !userData?._id) return;
-
     socket.emit("identity", { userId: userData._id });
   }, [socket, userData]);
 
-  // ✅ Wait for user fetch before deciding where to redirect
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen bg-orange-50">
-        <p className="text-orange-500 text-lg font-semibold animate-pulse">
-          Loading...
-        </p>
-      </div>
-    );
+    return <div className="flex justify-center items-center min-h-screen bg-orange-50"><p className="text-orange-500 text-lg font-semibold animate-pulse">Loading...</p></div>;
   }
 
   if (!userData) {
     return (
-      <Routes>
-        <Route path="/signup" element={<SignUp />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="*" element={<Navigate to="/signin" />} />
-      </Routes>
+      <>
+        <Routes>
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="*" element={<Navigate to="/signin" />} />
+        </Routes>
+        <AiFoodAssistant />
+      </>
     );
   }
 
   return (
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/create-edit-shop" element={<CreateEditShop />} />
-      <Route path="*" element={<Navigate to="/" />} />
-      <Route path="/add-item" element={userData ? <AddItem /> : <SignIn />} />
-      <Route path="/edit-item/:itemId" element={<EditItem />} />
-      <Route path="/cart" element={<CartPage />} />
-      <Route path="/checkout" element={<CheckOut />} />
-      <Route path="/order-placed" element={<OrderPlaced />} />
-      <Route path="/my-orders" element={<MyOrders />} />
-      <Route path="/track-order/:orderId" element={<TrackOrderPage />} />
-      <Route path="/shop/:shopId" element={<Shop />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/create-edit-shop" element={<CreateEditShop />} />
+        <Route path="/add-item" element={userData ? <AddItem /> : <SignIn />} />
+        <Route path="/edit-item/:itemId" element={<EditItem />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckOut />} />
+        <Route path="/order-placed" element={<OrderPlaced />} />
+        <Route path="/my-orders" element={<MyOrders />} />
+        <Route path="/track-order/:orderId" element={<TrackOrderPage />} />
+        <Route path="/shop/:shopId" element={<Shop />} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+      <AiFoodAssistant />
+    </>
   );
 };
 
 export default App;
-
-// OWNER LOGIN EMAIL & PASSWORD -- doemarrie0@gmail.com || admin1234
-
-// USER LOGIN EMAIL && PASSWORD -- duttatannupa447@gmail.com || admin1234
