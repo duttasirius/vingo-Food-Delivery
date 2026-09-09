@@ -131,7 +131,9 @@ const catalogEntry = ({ item, shop }) => ({
 const loadCatalog = async () => {
   const items = await Item.find({}).lean();
   const shopIds = items.map((item) => item.shop).filter(Boolean);
-  const shops = await Shop.find({ _id: { $in: shopIds } }).select("name description image city").lean();
+  const shops = await Shop.find({ _id: { $in: shopIds } })
+    .select("name description image city")
+    .lean();
   const shopMap = new Map(shops.map((shop) => [String(shop._id), shop]));
 
   return items.map((item) => ({
@@ -175,9 +177,11 @@ export const aiItemSearch = async (req, res) => {
     if (!process.env.GEMINI_API_KEY) {
       return res.json({
         success: true,
-        items: fallbackMatches.slice(0, 6).map(({ item, shop }) => ({ ...item, shop })),
+        items: fallbackMatches
+          .slice(0, 6)
+          .map(({ item, shop }) => ({ ...item, shop })),
         answer: fallbackMatches.length
-          ? "Here are the closest matches from available restaurants."
+          ? "Here are the best matches I found for you."
           : "I could not find a matching food item.",
         source: "catalog",
       });
@@ -210,7 +214,9 @@ export const aiItemSearch = async (req, res) => {
       ? aiResult.itemIds.map(String)
       : [];
 
-    const byId = new Map(catalog.map(({ item, shop }) => [String(item._id), { item, shop }]));
+    const byId = new Map(
+      catalog.map(({ item, shop }) => [String(item._id), { item, shop }]),
+    );
     const aiMatches = requestedIds
       .map((id) => byId.get(id))
       .filter(Boolean)
@@ -246,9 +252,11 @@ export const aiItemSearch = async (req, res) => {
       const matches = keywordMatches(query, catalog);
       return res.json({
         success: true,
-        items: matches.slice(0, 6).map(({ item, shop }) => ({ ...item, shop })),
+        items: matches
+          .slice(0, 6)
+          .map(({ item, shop }) => ({ ...item, shop })),
         answer: matches.length
-          ? "AI search is briefly unavailable; here are the closest food matches."
+          ? "Here are the best matches I found for you."
           : "I could not find a matching food item.",
         source: "catalog",
       });
