@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
 import genToken from "../utils/token.js";
 import { sendOtpMail } from "../utils/mail.js";
 
@@ -49,6 +50,10 @@ export const signUp = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Registration failed",
+    });
   }
 };
 
@@ -84,11 +89,14 @@ export const signIn = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Login failed",
+    });
   }
 };
 
 // logout user
-
 export const signOut = async (req, res) => {
   try {
     res.clearCookie("token");
@@ -99,11 +107,14 @@ export const signOut = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Logout failed",
+    });
   }
 };
 
 // reset password otp 1ts stage
-
 export const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -114,52 +125,10 @@ export const sendOtp = async (req, res) => {
       return res.status(400).json({ message: "NO USER FOUND" });
     }
 
-    // Generate a 4-digit OTP
-
-    // Math.random() → gives a decimal number between 0 and 0.9999
-    // Example: 0.345, 0.912, 0.001
-
-    // Multiply by 9000 → now range becomes 0 to 8999
-    // We use 9000 because we want exactly 9000 possible numbers (1000–9999)
-
-    // Add 1000 → shifts range from:
-    // 0–8999  →  1000–9999
-    // This ensures OTP is always 4 digits (never 0123 or 0987)
-
-    // Math.floor() → removes decimal part
-    // Example: 4821.78 → 4821
-
-    // Final range after floor:
-    // 1000 → 9999 (perfect 4-digit OTP)
-
-    // toString() → convert number to string
-    // Needed because OTP is usually stored/sent as text
-
     const otp = Math.floor(1000 + Math.random() * 9000).toString();
 
     user.resetOtp = otp;
-
-    // / Set an expiry time 5 minutes from now
-
-    // Date.now()
-    // → returns current time in milliseconds since Jan 1, 1970 (Unix epoch)
-    // Example: 1707312345678
-
-    // 5 * 60 * 1000
-    // 5   → minutes
-    // 60  → seconds in 1 minute
-    // 1000 → milliseconds in 1 second
-
-    // So:
-    // 5 * 60 * 1000 = 300000 milliseconds
-    // = 5 minutes
-
-    // Date.now() + 5 * 60 * 1000
-    // → current time + 5 minutes
-    // This creates an expiry timestamp in the future
-
     user.otpExpires = Date.now() + 5 * 60 * 1000;
-
     user.isOtpVerified = false;
 
     await user.save();
@@ -171,18 +140,20 @@ export const sendOtp = async (req, res) => {
     });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to send OTP",
+    });
   }
 };
 
 // 2nd stage
-
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
 
     const user = await User.findOne({ email });
 
-    // user not found
     if (!user) {
       return res.status(400).json({
         success: false,
@@ -190,7 +161,6 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
-    // expired
     if (user.otpExpires < Date.now()) {
       return res.status(400).json({
         success: false,
@@ -198,7 +168,6 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
-    // wrong otp
     if (user.resetOtp !== otp) {
       return res.status(400).json({
         success: false,
@@ -206,7 +175,6 @@ export const verifyOtp = async (req, res) => {
       });
     }
 
-    // success
     user.isOtpVerified = true;
     user.resetOtp = undefined;
     user.otpExpires = undefined;
@@ -223,7 +191,6 @@ export const verifyOtp = async (req, res) => {
 };
 
 // 3 rd stage RESET PASSWORD
-
 export const resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
@@ -246,7 +213,6 @@ export const resetPassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedPassword;
 
-    // reset flags AFTER password change
     user.isOtpVerified = false;
     user.resetOtp = undefined;
     user.otpExpires = undefined;
@@ -259,6 +225,10 @@ export const resetPassword = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
+    return res.status(500).json({
+      success: false,
+      message: "Password reset failed",
+    });
   }
 };
 
@@ -267,13 +237,26 @@ export const googleAuth = async (req, res) => {
   try {
     const { fullName, email, mobile, role } = req.body;
 
+    if (!fullName || !email || !role) {
+      return res.status(400).json({
+        success: false,
+        message: "Google account details are incomplete",
+      });
+    }
+
     let user = await User.findOne({ email });
 
     if (!user) {
+      // The User schema requires a password even for Google accounts.
+      // Generate a random value that is never exposed to the client and
+      // store only its bcrypt hash. Google users still authenticate via Google.
+      const googlePassword = await bcrypt.hash(randomUUID(), 10);
+
       user = await User.create({
         fullName,
         email,
-        mobile,
+        password: googlePassword,
+        mobile: mobile || "0000000000",
         role,
       });
     }
@@ -292,10 +275,11 @@ export const googleAuth = async (req, res) => {
       user,
     });
   } catch (error) {
-    console.log(error);
-    res.josn({
+    console.log("GOOGLE AUTH ERROR:", error.message);
+
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Google authentication failed",
     });
   }
 };
