@@ -6,29 +6,28 @@ import { setItemsInMyCity } from "../redux/userSlice";
 
 function userGetItemByCity() {
   const dispatch = useDispatch();
-  const { currentCity } = useSelector((state) => state.user);
+  const { currentCity, userData } = useSelector((state) => state.user);
 
   useEffect(() => {
-    if (!currentCity) return;
+    if (!currentCity || !userData?._id) return;
 
     const fetchItems = async () => {
       try {
         const results = await axios.get(
-          `${serverurl}/api/item/get-by-city/${currentCity}`,
+          `${serverurl}/api/item/get-by-city/${encodeURIComponent(currentCity)}`,
           { withCredentials: true },
         );
 
-        console.log("this is usegetitembycity api:", results.data);
-
-        // store only items array in redux
-        dispatch(setItemsInMyCity(results.data.items));
+        console.log("this is useGetItemByCity api:", results.data);
+        dispatch(setItemsInMyCity(results.data.items || []));
       } catch (error) {
-        console.log(error);
+        console.log("ITEM FETCH ERROR:", error.response?.data || error.message);
+        dispatch(setItemsInMyCity([]));
       }
     };
 
     fetchItems();
-  }, [currentCity]);
+  }, [currentCity, userData?._id, dispatch]);
 }
 
 export default userGetItemByCity;
