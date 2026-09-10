@@ -9,20 +9,23 @@ function useGetShopByCity() {
   const { currentCity } = useSelector((state) => state.user);
 
   useEffect(() => {
+    if (!currentCity) return;
+
     const fetchByShops = async () => {
       try {
         const result = await axios.get(
-          `${serverurl}/api/shop/get-by-city/${currentCity}`,
+          `${serverurl}/api/shop/get-by-city/${encodeURIComponent(currentCity)}`,
           { withCredentials: true },
         );
 
-        dispatch(setShopsInMyCity(result.data.shops));
+        dispatch(setShopsInMyCity(result.data.shops || []));
       } catch (error) {
-        console.log(error);
+        console.log("SHOP FETCH ERROR:", error.response?.data || error.message);
       }
     };
+
     fetchByShops();
-  }, [currentCity]);
+  }, [currentCity, dispatch]);
 }
 
 export default useGetShopByCity;
