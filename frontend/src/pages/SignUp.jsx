@@ -6,11 +6,13 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { serverurl } from "../App";
 import { GoogleAuthProvider } from "firebase/auth";
-
 import { signInWithPopup } from "firebase/auth";
 import { auth } from "../../firebase.js";
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/userSlice.js";
+
+const getApiErrorMessage = (error, fallback) =>
+  error?.response?.data?.message || error?.message || fallback;
 
 const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -32,21 +34,25 @@ const SignUp = () => {
         { withCredentials: true },
       );
 
-      console.log(result);
-      dispatch(setUserData(result.data));
+      setErr("");
+      dispatch(setUserData(result.data.user));
+      navigate("/");
     } catch (error) {
-      setErr(error.response.data.message);
+      console.log("SIGN UP ERROR:", error.response?.data || error.message);
+      setErr(getApiErrorMessage(error, "Unable to sign up. Please try again."));
     }
   };
 
   const handleGoogleAuth = async () => {
-    console.log("clicked");
-    if (!mobile) {
-      return setErr("MOBILE NUMBER REQUIRED");
-    }
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
     try {
+      if (!mobile) {
+        setErr("MOBILE NUMBER REQUIRED");
+        return;
+      }
+
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+
       const { data } = await axios.post(
         `${serverurl}/api/auth/google-auth`,
         {
@@ -58,11 +64,14 @@ const SignUp = () => {
         { withCredentials: true },
       );
 
-      console.log(data);
-      dispatch(setUserData(data));
+      dispatch(setUserData(data.user));
       setErr("");
+      navigate("/");
     } catch (error) {
-      console.log("ERROR:", error.code, error.message);
+      console.log("GOOGLE SIGN UP ERROR:", error.response?.data || error.message);
+      setErr(
+        getApiErrorMessage(error, "Google sign up failed. Please try again."),
+      );
     }
   };
 
@@ -153,8 +162,7 @@ const SignUp = () => {
               <button
                 key={r}
                 onClick={() => setRole(r)}
-                className={`px-3 py-2 rounded-lg text-sm border transition 
-                ${
+                className={`px-3 py-2 rounded-lg text-sm border transition ${
                   role === r
                     ? "bg-orange-500 text-white border-orange-500"
                     : "border-orange-400 text-gray-700 hover:bg-orange-50"
