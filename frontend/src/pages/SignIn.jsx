@@ -11,6 +11,9 @@ import { auth } from "../../firebase.js";
 import { useDispatch } from "react-redux";
 import { setUserData } from "../redux/userSlice.js";
 
+const getApiErrorMessage = (error, fallback) =>
+  error?.response?.data?.message || error?.message || fallback;
+
 const SignIn = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("user");
@@ -30,34 +33,39 @@ const SignIn = () => {
         { withCredentials: true },
       );
 
-      console.log(result);
       setErr("");
       dispatch(setUserData(result.data.user));
-
       navigate("/");
     } catch (error) {
-      console.log(error);
-      setErr(error.response.data.message);
+      console.log("SIGN IN ERROR:", error.response?.data || error.message);
+      setErr(getApiErrorMessage(error, "Unable to sign in. Please try again."));
     }
   };
 
   const handleGoogleAuth = async () => {
-    console.log("clicked");
-
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
     try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+
       const { data } = await axios.post(
         `${serverurl}/api/auth/google-auth`,
         {
+          fullName: result.user.displayName,
           email: result.user.email,
+          role,
+          mobile: "0000000000",
         },
         { withCredentials: true },
       );
-      console.log(data);
-      dispatch(setUserData(result.data.user));
+
+      dispatch(setUserData(data.user));
+      setErr("");
+      navigate("/");
     } catch (error) {
-      console.log("ERROR:", error.code, error.message);
+      console.log("GOOGLE SIGN IN ERROR:", error.response?.data || error.message);
+      setErr(
+        getApiErrorMessage(error, "Google sign in failed. Please try again."),
+      );
     }
   };
 
@@ -111,8 +119,7 @@ const SignIn = () => {
           </div>
         </div>
 
-        {/* FORGET PASSWORD  */}
-
+        {/* FORGET PASSWORD */}
         <div
           className="text-right mb-4 text-orange-400 font-medium cursor-pointer"
           onClick={() => navigate("/forgot-password")}
@@ -120,7 +127,7 @@ const SignIn = () => {
           Forget Password ?{" "}
         </div>
 
-        {/* Sign up button */}
+        {/* Sign in button */}
         <button
           onClick={handleSignIn}
           className="w-full bg-orange-500 hover:bg-orange-600 text-white py-2 rounded-lg font-medium transition"
@@ -145,7 +152,7 @@ const SignIn = () => {
           <span className="text-sm font-medium">Sign in with Google</span>
         </button>
 
-        {/* Sign in */}
+        {/* Sign up */}
         <p
           onClick={() => navigate("/signup")}
           className="text-sm text-center mt-6 text-gray-500 cursor-pointer"
