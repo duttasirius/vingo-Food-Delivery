@@ -4,7 +4,12 @@
 
 <p align="center"><strong>A production-style MERN food-delivery platform combining AI food discovery, location-aware discovery, secure authentication, realtime order communication, payments, reviews, and separate customer / owner / delivery workflows.</strong></p>
 
-<p align="center"><a href="https://github.com/duttasirius/vingo-Food-Delivery">💻 Source</a> · <strong>Development branch: dev</strong></p>
+<p align="center">
+  <a href="https://vingo-food-delivery-cnjr.vercel.app">🚀 Live Demo</a> ·
+  <a href="https://vingo-food-delivery-rust.vercel.app">⚙️ Backend API</a> ·
+  <a href="https://github.com/duttasirius/vingo-Food-Delivery">💻 Source</a> ·
+  <strong>Development branch: dev</strong>
+</p>
 
 ## ⚡ At a Glance
 
