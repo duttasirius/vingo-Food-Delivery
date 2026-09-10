@@ -4,10 +4,12 @@ import { randomUUID } from "crypto";
 import genToken from "../utils/token.js";
 import { sendOtpMail } from "../utils/mail.js";
 
+const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1";
+
 const authCookieOptions = {
   httpOnly: true,
-  secure: true,
-  sameSite: "none",
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
   path: "/",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
