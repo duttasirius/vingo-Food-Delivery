@@ -6,10 +6,10 @@ import { setShopsInMyCity } from "../redux/userSlice";
 
 function useGetShopByCity() {
   const dispatch = useDispatch();
-  const { currentCity } = useSelector((state) => state.user);
+  const { currentCity, userData } = useSelector((state) => state.user);
 
   useEffect(() => {
-    if (!currentCity) return;
+    if (!currentCity || !userData?._id) return;
 
     const fetchByShops = async () => {
       try {
@@ -21,11 +21,12 @@ function useGetShopByCity() {
         dispatch(setShopsInMyCity(result.data.shops || []));
       } catch (error) {
         console.log("SHOP FETCH ERROR:", error.response?.data || error.message);
+        dispatch(setShopsInMyCity([]));
       }
     };
 
     fetchByShops();
-  }, [currentCity, dispatch]);
+  }, [currentCity, userData?._id, dispatch]);
 }
 
 export default useGetShopByCity;
