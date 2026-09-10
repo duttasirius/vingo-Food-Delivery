@@ -24,7 +24,11 @@ import { io } from "socket.io-client";
 import { setSocket } from "./redux/userSlice";
 import AiFoodAssistant from "./components/AiFoodAssistant";
 
-export const serverurl = import.meta.env.VITE_SERVER_URL || "http://localhost:8000";
+// Normalize the API URL so a trailing slash in Vercel env variables
+// can never create requests such as //api/auth/signin.
+export const serverurl = (
+  import.meta.env.VITE_SERVER_URL || "http://localhost:8000"
+).replace(/\/+$/, "");
 
 const App = () => {
   const isLoading = userGetCurrentUser();
@@ -39,10 +43,15 @@ const App = () => {
 
   useEffect(() => {
     const socketInstance = io(serverurl, { withCredentials: true });
-    socketInstance.on("connect", () => console.log("Connected:", socketInstance.id));
+    socketInstance.on("connect", () =>
+      console.log("Connected:", socketInstance.id),
+    );
+    socketInstance.on("connect_error", (error) => {
+      console.log("Socket connection error:", error.message);
+    });
     dispatch(setSocket(socketInstance));
     return () => socketInstance.disconnect();
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     if (!socket || !userData?._id) return;
@@ -50,7 +59,13 @@ const App = () => {
   }, [socket, userData]);
 
   if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen bg-orange-50"><p className="text-orange-500 text-lg font-semibold animate-pulse">Loading...</p></div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-orange-50">
+        <p className="text-orange-500 text-lg font-semibold animate-pulse">
+          Loading...
+        </p>
+      </div>
+    );
   }
 
   if (!userData) {
