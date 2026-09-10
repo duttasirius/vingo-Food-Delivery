@@ -4,6 +4,14 @@ import { randomUUID } from "crypto";
 import genToken from "../utils/token.js";
 import { sendOtpMail } from "../utils/mail.js";
 
+const authCookieOptions = {
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+  path: "/",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+};
+
 // REGISTER USER
 export const signUp = async (req, res) => {
   try {
@@ -37,12 +45,7 @@ export const signUp = async (req, res) => {
 
     const token = await genToken(user._id);
 
-    res.cookie("token", token, {
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-    });
+    res.cookie("token", token, authCookieOptions);
 
     return res.status(201).json({
       success: true,
@@ -57,7 +60,7 @@ export const signUp = async (req, res) => {
   }
 };
 
-// login user
+// LOGIN USER
 export const signIn = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -76,12 +79,7 @@ export const signIn = async (req, res) => {
 
     const token = await genToken(user._id);
 
-    res.cookie("token", token, {
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-    });
+    res.cookie("token", token, authCookieOptions);
 
     return res.status(201).json({
       success: true,
@@ -96,10 +94,11 @@ export const signIn = async (req, res) => {
   }
 };
 
-// logout user
+// LOGOUT USER
 export const signOut = async (req, res) => {
   try {
-    res.clearCookie("token");
+    const { maxAge, ...clearCookieOptions } = authCookieOptions;
+    res.clearCookie("token", clearCookieOptions);
 
     return res.status(201).json({
       success: true,
@@ -114,7 +113,7 @@ export const signOut = async (req, res) => {
   }
 };
 
-// reset password otp 1ts stage
+// RESET PASSWORD OTP - 1ST STAGE
 export const sendOtp = async (req, res) => {
   try {
     const { email } = req.body;
@@ -147,7 +146,7 @@ export const sendOtp = async (req, res) => {
   }
 };
 
-// 2nd stage
+// 2ND STAGE
 export const verifyOtp = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -190,7 +189,7 @@ export const verifyOtp = async (req, res) => {
   }
 };
 
-// 3 rd stage RESET PASSWORD
+// 3RD STAGE RESET PASSWORD
 export const resetPassword = async (req, res) => {
   try {
     const { email, newPassword } = req.body;
@@ -263,12 +262,7 @@ export const googleAuth = async (req, res) => {
 
     const token = await genToken(user._id);
 
-    res.cookie("token", token, {
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-    });
+    res.cookie("token", token, authCookieOptions);
 
     return res.status(201).json({
       success: true,
